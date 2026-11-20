@@ -116,9 +116,10 @@ class AppNavebar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
                   onPressed: () => navegar('/cadastro'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.verdeMuzziTennis,
@@ -134,8 +135,27 @@ class AppNavebar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                child: const Text('ANUNCIAR QUADRA'),
-              ),
+                  child: const Text('ANUNCIAR QUADRA'),
+                ),
+
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: () => navegar('/login'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.verdeMuzziTennis,
+                    foregroundColor: AppTheme.fundoPreto,
+                    textStyle: GoogleFonts.barlowCondensed(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('LOGIN'),
+                ),
+              ],
             ),
           ),
         ],
