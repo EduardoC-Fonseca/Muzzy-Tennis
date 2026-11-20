@@ -1,8 +1,7 @@
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:muzzi_tennis/core/app_theme.dart';
-
 class AppNavebar extends StatelessWidget {
   const AppNavebar({super.key});
 
@@ -24,9 +23,30 @@ class AppNavebar extends StatelessWidget {
       }
     }
 
+    final estiloNavegacao = ButtonStyle(
+      textStyle: WidgetStatePropertyAll(
+        GoogleFonts.barlowCondensed(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1,
+        ),
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith<Color>(
+        (states) {
+          if (states.contains(WidgetState.hovered)) {
+            return AppTheme.verdeMuzziTennis;
+          }
+          return AppTheme.textoBranco;
+        },
+      ),
+      overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+      backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+      side: const WidgetStatePropertyAll(BorderSide.none),
+    );
+
     return Container(
       height: 64,
-      color: AppTheme.fundoPreto,
+      color: AppTheme.superficiePreta,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
@@ -49,14 +69,20 @@ class AppNavebar extends StatelessWidget {
                         children: [
                           TextSpan(
                             text: 'MUZZI ',
-                            style: TextStyle(
-                              color: AppTheme.textoBranco,
+                            style: GoogleFonts.barlowCondensed(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                              color: AppTheme.textoBranco
                             ),
                           ),
                           TextSpan(
                             text: 'TENNIS',
-                            style: TextStyle(
-                              color: AppTheme.verdeMuzziTennis,
+                            style: GoogleFonts.barlowCondensed(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1,
+                              color: AppTheme.verdeMuzziTennis
                             ),
                           ),
                         ],
@@ -76,11 +102,13 @@ class AppNavebar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
+                  style: estiloNavegacao,
                   onPressed: voltarInicio,
                   child: const Text('INÍCIO'),
                 ),
                 const SizedBox(width: 24),
                 TextButton(
+                  style: estiloNavegacao,
                   onPressed: () => navegar('/quadras'),
                   child: const Text('QUADRAS'),
                 ),
@@ -91,13 +119,21 @@ class AppNavebar extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton(
-                onPressed: () => navegar('/cadastro'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.verdeMuzziTennis,
-                  side: const BorderSide(
-                    color: AppTheme.verdeMuzziTennis,
+                  onPressed: () => navegar('/cadastro'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.verdeMuzziTennis,
+                    side: const BorderSide(
+                      color: AppTheme.verdeMuzziTennis,
+                    ),
+                    textStyle: GoogleFonts.barlowCondensed(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                ),
                 child: const Text('ANUNCIAR QUADRA'),
               ),
             ),
