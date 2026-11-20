@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="main" x1=".03" y1=".92" x2=".81" y2=".32" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#218f31"/><stop offset=".33" stop-color="#3cae22"/>
+      <stop offset=".62" stop-color="#8ad322"/><stop offset=".83" stop-color="#b9e84c"/><stop offset="1" stop-color="#83bf36"/>
+    </linearGradient>
+    <linearGradient id="lime" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#65bd25"/><stop offset=".48" stop-color="#bbeb1a"/><stop offset="1" stop-color="#d4f46b"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#078a28"/><stop offset=".55" stop-color="#45a625"/><stop offset="1" stop-color="#86ce2c"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#53a622"/><stop offset=".7" stop-color="#9bd638"/><stop offset="1" stop-color="#e6f8b2"/>
+    </linearGradient>
+    <radialGradient id="ball" cx=".34" cy=".21" r=".93">
+      <stop offset="0" stop-color="#d5f456"/><stop offset=".36" stop-color="#abdb32"/><stop offset=".69" stop-color="#78ac23"/><stop offset=".93" stop-color="#396f13"/><stop offset="1" stop-color="#24520e"/>
+    </radialGradient>
+    <clipPath id="ballClip"><circle cx="853" cy="285" r="112"/></clipPath>
+  </defs>
+  <!-- narrow upper flight trails -->
+  <path d="M217 365 Q498 279 749 222 Q574 282 217 365Z" fill="url(#lime)"/>
+  <path d="M550 235 Q660 204 770 194 Q655 220 550 235Z" fill="#78b83c"/>
+  <path d="M568 253 Q683 217 769 208 Q664 237 568 253Z" fill="#a8db5d"/>
+  <path d="M344 347 Q588 260 760 252 L760 270 Q614 271 344 347Z" fill="url(#trail)"/>
+  <path d="M300 392 Q540 292 734 286 Q609 304 476 358 Q371 388 300 392Z" fill="#4eaf20"/>
+  <!-- broad upper swept ribbon -->
+  <path d="M193 490 Q416 335 609 319 Q748 299 723 374 Q704 428 550 501 Q373 589 240 699 Q147 776 125 798 Q143 715 334 594 Q597 434 625 397 Q654 356 572 357 Q444 353 193 490Z" fill="url(#main)"/>
+  <path d="M198 480 Q428 348 614 331 Q719 321 708 370 Q701 417 534 500 Q351 596 225 702 Q380 548 573 423 Q648 367 589 363 Q440 359 198 480Z" fill="url(#lime)"/>
+  <path d="M201 486 Q431 374 571 353 Q674 341 649 395 Q635 428 490 506 Q395 557 304 617 Q440 493 555 427 Q616 380 583 383 Q481 378 201 486Z" fill="url(#dark)"/>
+  <path d="M236 472 Q457 365 565 370 Q627 373 596 413 Q556 450 469 489 Q577 412 552 405 Q467 395 236 472Z" fill="#90d722"/>
+  <!-- lower sweeping S loop -->
+  <path d="M142 710 Q260 590 419 513 Q258 642 226 709 Q199 770 286 765 Q447 768 667 721 Q498 794 309 824 Q185 847 135 820 Q98 804 142 710Z" fill="url(#main)"/>
+  <path d="M166 727 Q310 596 469 510 Q290 653 265 707 Q241 752 297 753 Q469 748 656 724 Q505 773 306 795 Q187 813 148 800 Q131 791 166 727Z" fill="url(#lime)"/>
+  <path d="M185 731 Q287 638 417 562 Q293 666 268 722 Q246 772 345 763 Q475 755 634 728 Q466 782 301 779 Q205 780 185 761 Q176 751 185 731Z" fill="#64c029"/>
+  <path d="M198 740 Q282 654 377 606 Q289 698 278 729 Q257 759 363 749 Q475 738 602 731 Q449 775 285 769 Q197 762 198 740Z" fill="#178e2c"/>
+  <!-- thin bottom traces -->
+  <path d="M106 833 Q260 884 657 744 Q327 891 106 833Z" fill="#208f2b"/>
+  <path d="M139 846 Q330 871 667 738 Q359 866 139 846Z" fill="#68bb24"/>
+  <path d="M145 720 Q289 583 432 512 Q276 628 145 720Z" fill="#338f24"/>
+  <!-- ball speed marks -->
+  <path d="M496 516 Q652 417 785 334 L801 351 Q692 430 496 516Z" fill="url(#trail)"/>
+  <path d="M581 490 Q718 406 801 349 L801 358 Q714 421 581 490Z" fill="#368d1e"/>
+  <path d="M671 451 Q760 386 812 357 L798 373 Q747 407 671 451Z" fill="#a8d962"/>
+  <!-- tennis ball -->
+  <circle cx="853" cy="285" r="112" fill="url(#ball)"/>
+  <g clip-path="url(#ballClip)" fill="none" stroke-linecap="round">
+    <path d="M748 258 C790 172 829 173 855 199 C893 238 904 281 970 277" stroke="#e9f4df" stroke-width="14"/>
+    <path d="M749 304 C781 319 791 366 842 391 C885 414 916 407 941 396" stroke="#e9f4df" stroke-width="14"/>
+    <path d="M750 256 C790 176 828 179 856 202 C891 242 909 281 963 278" stroke="#ffffff" stroke-opacity=".55" stroke-width="5"/>
+    <path d="M749 304 C786 323 790 365 840 389" stroke="#ffffff" stroke-opacity=".55" stroke-width="5"/>
+  </g>
+</svg>
