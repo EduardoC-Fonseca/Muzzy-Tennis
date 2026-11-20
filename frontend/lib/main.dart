@@ -1,4 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:muzzi_tennis/core/app_theme.dart';
+import 'package:muzzi_tennis/pages/cadastro_quadras_page.dart';
+import 'package:muzzi_tennis/pages/inicio_page.dart';
+import 'package:muzzi_tennis/pages/quadras_page.dart';
 
 void main() {
   runApp(const MuzziTennisApp());
@@ -12,12 +16,12 @@ class MuzziTennisApp extends StatelessWidget {
     return MaterialApp(
       title: 'Muzzi Tennis',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: Scaffold(
-        body: Center(
-          child: Text('Bem-vindo ao Muzzi Tennis!'),
-        ),
-      ),
+      theme: AppTheme.muzziTennisTheme,
+      home: const InicioPage(),
+      routes: {
+        '/quadras': (context) => const QuadrasPage(),
+        '/cadastro':(context) => const CadastroQuadrasPage()
+      },
     );
   }
 }
