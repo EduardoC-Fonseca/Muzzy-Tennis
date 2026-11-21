@@ -107,6 +107,11 @@ class _BarraPesquisaState extends State<SearchBarMuzziTennis> {
                 final correspondeSuperficie = superficieSelecionada == null || superficieQuadra == superficieSelecionada;
                 return correspondeCidade && correspondeSuperficie;
               }).toList();
+              Navigator.pushNamed(
+                context,
+                '/quadras',
+                arguments: resultados,
+              );
 
               debugPrint('Quadras encontradas: ${resultados.length}');
 

@@ -6,15 +6,35 @@ class QuadrasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resultados = ModalRoute.of(context)?.settings.arguments as List<Map<String, Object>>?;
+
     return Scaffold(
       body: Column(
         children: [
           const AppNavebar(),
-          const Expanded(
-            child: Center(
-              child: Text('Página de Quadras'),
+          if (resultados != null)
+            Expanded(
+              child: ListView(
+                children: [
+                  Text('Quadras encontradas: ${resultados.length}'),
+                  if (resultados.isEmpty)
+                    const ListTile(
+                      title: Text('Nenhuma quadra encontrada.'),
+                    ),
+                  for (final quadra in resultados)
+                    ListTile(
+                      title: Text(quadra['nome'].toString()),
+                      subtitle: Text(quadra['cidade'].toString()),
+                    ),
+                ],
+              ),
             ),
-          ),
+          if (resultados == null)
+            const Expanded(
+              child: Center(
+                child: Text('Página de Quadras'),
+              ),
+            ),
         ],
       ),
     );
