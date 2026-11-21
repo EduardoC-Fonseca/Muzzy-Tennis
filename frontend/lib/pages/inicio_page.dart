@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:muzzi_tennis/widgets/app_navbar.dart';
+import 'package:muzzi_tennis/widgets/hero_section.dart';
 
 class InicioPage extends StatelessWidget {
   const InicioPage({super.key});
@@ -10,11 +11,13 @@ class InicioPage extends StatelessWidget {
       body: Column(
         children: [
           const AppNavebar(),
-          const Expanded(
-            child: Center(
-              child: Text('Página Home'),
+          Expanded(child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const HeroSection(),
+              ],
             ),
-          ),
+          ))
         ],
       ),
     );
