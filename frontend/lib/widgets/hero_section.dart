@@ -1,6 +1,7 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:muzzi_tennis/core/app_theme.dart';
+import 'package:muzzi_tennis/widgets/search_bar.dart';
 
 class HeroSection extends StatelessWidget {
   const HeroSection({super.key});
@@ -58,6 +59,8 @@ class HeroSection extends StatelessWidget {
               height: 1.6,
             ),
           ),
+          const SizedBox(height: 30),
+          const SearchBarMuzziTennis()
         ],
       ),
     );
