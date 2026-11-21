@@ -32,6 +32,19 @@ class _BarraPesquisaState extends State<SearchBarMuzziTennis> {
     },
   ];
 
+  String normalizarCidade(String texto) {
+  return texto
+      .toLowerCase()
+      .trim()
+      .replaceAll(RegExp(r'[áàâãä]'), 'a')
+      .replaceAll(RegExp(r'[éèêë]'), 'e')
+      .replaceAll(RegExp(r'[íìîï]'), 'i')
+      .replaceAll(RegExp(r'[óòôõö]'), 'o')
+      .replaceAll(RegExp(r'[úùûü]'), 'u')
+      .replaceAll('ç', 'c')
+      .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
   @override 
   Widget build(BuildContext context){
     return Row(
@@ -88,7 +101,9 @@ class _BarraPesquisaState extends State<SearchBarMuzziTennis> {
               final resultados = quadras.where((quadra) {
                 final cidadeQuadra = quadra['cidade'] as String;
                 final superficieQuadra = quadra['superficie'];
-                final correspondeCidade = cidadeQuadra.toLowerCase().contains(cidade.trim().toLowerCase());
+                final cidadeNormalizada = normalizarCidade(cidade);
+                final cidadeQuadraNormalizada = normalizarCidade(cidadeQuadra);
+                final correspondeCidade = cidadeNormalizada.split(' ').every((palavra) => cidadeQuadraNormalizada.contains(palavra));
                 final correspondeSuperficie = superficieSelecionada == null || superficieQuadra == superficieSelecionada;
                 return correspondeCidade && correspondeSuperficie;
               }).toList();
