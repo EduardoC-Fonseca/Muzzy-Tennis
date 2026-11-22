@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><project name="Muzzi Tennis — Planejamento do Projeto." company="" webLink="http://" view-date="2026-09-13" view-index="0" gantt-divider-location="664" resource-divider-location="300" version="3.3.3322" locale="pt_BR">
+    <description/>
+    <view zooming-state="default:6" id="gantt-chart">
+        <field id="tpd3" name="Nome" width="474" order="0"/>
+        <field id="tpd4" name="Data inicial" width="111" order="1"/>
+        <field id="tpd5" name="Data final" width="78" order="2"/>
+        <field id="tpd15" name="Notas" width="20" order="3"/>
+        <option id="filter.completedTasks" value="false"/>
+        <option id="filter.dueTodayTasks" value="false"/>
+        <option id="filter.overdueTasks" value="false"/>
+        <option id="filter.inProgressTodayTasks" value="false"/>
+        <option id="color.recent"><![CDATA[#ffcccc]]></option>
+    </view>
+    <view id="resource-table">
+        <field id="0" name="Nome" width="210" order="0"/>
+        <field id="1" name="Função" width="86" order="1"/>
+    </view>
+    <!-- -->
+    <calendars>
+        <day-types>
+            <day-type id="0"/>
+            <day-type id="1"/>
+            <default-week id="1" name="default" sun="1" mon="0" tue="0" wed="0" thu="0" fri="0" sat="1"/>
+            <only-show-weekends value="false"/>
+            <overriden-day-types/>
+            <days/>
+        </day-types>
+    </calendars>
+    <tasks empty-milestones="true">
+        <taskproperties>
+            <taskproperty id="tpd0" name="type" type="default" valuetype="icon"/>
+            <taskproperty id="tpd1" name="priority" type="default" valuetype="icon"/>
+            <taskproperty id="tpd2" name="info" type="default" valuetype="icon"/>
+            <taskproperty id="tpd3" name="name" type="default" valuetype="text"/>
+            <taskproperty id="tpd4" name="begindate" type="default" valuetype="date"/>
+            <taskproperty id="tpd5" name="enddate" type="default" valuetype="date"/>
+            <taskproperty id="tpd6" name="duration" type="default" valuetype="int"/>
+            <taskproperty id="tpd7" name="completion" type="default" valuetype="int"/>
+            <taskproperty id="tpd8" name="coordinator" type="default" valuetype="text"/>
+            <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
+        </taskproperties>
+        <task id="0" uid="89c5371ea28848dd90cb64ba00efd5ec" name="Plano do projeto" meeting="false" start="2026-09-01" duration="41" complete="0" expand="true"/>
+        <task id="1" uid="2252e0f7d46348209e7637d19480030e" name="Construção de benchmarking" meeting="false" start="2026-09-07" duration="1" complete="0" expand="true"/>
+        <task id="2" uid="77519e376a504682b1f69452b602770a" name="Cronograma" meeting="false" start="2026-10-19" duration="1" complete="0" expand="true"/>
+        <task id="3" uid="9980a3498c0946da9552b50e998f3313" name="Orçamento" meeting="false" start="2026-10-12" duration="1" complete="0" expand="true"/>
+        <task id="4" uid="b0f1a69cafaf4e338b62ad95af5078e7" name="Documento de requisitos" meeting="false" start="2026-09-07" duration="5" complete="0" expand="true">
+            <depend id="5" type="2" difference="0" hardness="Rubber"/>
+            <depend id="7" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="5" uid="84507981cb4f4658bdcb96aa156e8497" name="Histórias de usuário" meeting="false" start="2026-09-15" duration="3" complete="0" expand="true">
+            <depend id="6" type="1" difference="0" hardness="Rubber"/>
+            <depend id="9" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="6" uid="3a7d174b687d40129cf190ac729f873a" name="Cenários de testes" meeting="false" start="2026-09-17" duration="2" complete="0" expand="true">
+            <depend id="65" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="7" uid="8b49f4eac0194d8eb2b65ddde9a3f783" name="Construção da identidade visual" meeting="false" start="2026-09-16" duration="1" complete="0" expand="true">
+            <depend id="8" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="8" uid="8805a24c833648f69e5becf33e753c92" name="Protótipo das interfaces" meeting="false" start="2026-10-05" duration="1" complete="0" expand="true">
+            <depend id="29" type="2" difference="0" hardness="Rubber"/>
+            <depend id="32" type="2" difference="0" hardness="Rubber"/>
+            <depend id="34" type="2" difference="0" hardness="Rubber"/>
+            <depend id="36" type="2" difference="0" hardness="Rubber"/>
+            <depend id="38" type="2" difference="0" hardness="Rubber"/>
+            <depend id="45" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="46" uid="dde6892f0220464482c7db67e7898735" name="Banco de dados" meeting="false" start="2026-11-02" duration="1" complete="0" expand="false">
+            <task id="9" uid="3bc7bf660ea64c0fb91776a416716d3b" name="Modelar entidades e relacionamentos" color="#8cb6ce" meeting="false" start="2026-11-02" duration="1" complete="0" expand="true">
+                <depend id="47" type="1" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="47" uid="bcce03f2bf9a478989cb5dd6aff01434" name="Criação/configuração do banco de dados" meeting="false" start="2026-11-02" duration="1" complete="0" expand="true">
+                <depend id="12" type="2" difference="0" hardness="Rubber"/>
+                <depend id="13" type="2" difference="0" hardness="Rubber"/>
+                <depend id="19" type="2" difference="0" hardness="Rubber"/>
+                <depend id="49" type="2" difference="0" hardness="Rubber"/>
+            </task>
+        </task>
+        <task id="42" uid="0084a9de4e8a48219ac44a0bd21b8c88" name="Backend" meeting="false" start="2026-11-03" duration="10" complete="0" expand="false">
+            <task id="12" uid="3dd933a1eeef4729b563273b230e77d3" name="Implementar cadastro de quadras, incluindo validação dos campos obrigatórios, envio e validação de fotos e limite da descrição" color="#8cb6ce" meeting="false" start="2026-11-03" duration="1" complete="0" expand="true">
+                <depend id="51" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="13" uid="505fdf4e8c464136b33075fc7d50187e" name="Implementar consulta dos dados da quadra" color="#8cb6ce" meeting="false" start="2026-11-03" duration="2" complete="0" expand="true">
+                <depend id="20" type="2" difference="0" hardness="Rubber"/>
+                <depend id="35" type="2" difference="0" hardness="Rubber"/>
+                <depend id="45" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="20" uid="cc47dfbc04fe491d8efe50b79c89218d" name="Implementar gerenciamento da disponibilidade de datas e horários" meeting="false" start="2026-11-05" duration="1" complete="0" expand="true">
+                <depend id="52" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="52" uid="9a5a4ffa6a9e49eb9774fc4911531301" name="Implementar consulta de disponibilidade e validação de conflitos de horário" meeting="false" start="2026-11-06" duration="1" complete="0" expand="true">
+                <depend id="14" type="2" difference="0" hardness="Rubber"/>
+                <depend id="60" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="14" uid="7d8923523e5648ad8054f1f4d4938f60" name="Implementar criação da reserva e validação do limite de jogadores" meeting="false" start="2026-11-09" duration="2" complete="0" expand="true">
+                <depend id="15" type="2" difference="0" hardness="Rubber"/>
+                <depend id="18" type="2" difference="0" hardness="Rubber"/>
+                <depend id="24" type="2" difference="0" hardness="Rubber"/>
+                <depend id="57" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="15" uid="14c0e8f3ab6048f48146535f7337d15a" name="Implementar controle do pagamento/garantia e atualização do status da reserva" meeting="false" start="2026-11-11" duration="1" complete="0" expand="true">
+                <depend id="16" type="2" difference="0" hardness="Rubber"/>
+                <depend id="53" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="53" uid="676d5ec3ca9e42c6b294de57cff205d9" name="Implementar expiração automática da reserva após uma hora sem pagamento e liberação do horário" meeting="false" start="2026-11-12" duration="1" complete="0" expand="true">
+                <depend id="58" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="16" uid="c3467df06b9740ae8e56c845ba0c0942" name="Implementar cancelamento da reserva e aplicação da regra de 24 horas" meeting="false" start="2026-11-12" duration="2" complete="0" expand="true">
+                <depend id="54" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="54" uid="de96ca2174e742d7961c520b2300b244" name="Implementar controle de estorno conforme as regras de cancelamento" meeting="false" start="2026-11-16" duration="1" complete="0" expand="true">
+                <depend id="59" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="18" uid="1f2aa80ef45f45d7935e1c4a0fbc3763" name="Implementar consulta das reservas pelo dono da quadra e pelo cliente (novo)" meeting="false" start="2026-11-11" duration="3" complete="0" expand="true">
+                <depend id="59" type="2" difference="0" hardness="Rubber"/>
+                <depend id="61" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="49" uid="5feba810473b47e7b78c1822d3c884f5" name="Implementar consulta das reservas pelo código da reserva" color="#8cb6ce" meeting="false" start="2026-11-03" duration="1" complete="0" expand="true"/>
+            <task id="19" uid="53b13e5eedf64a719a5405f876008411" name="Implementar listagem e pesquisa de usuários, retornando nome, e-mail, papel e status" meeting="false" start="2026-11-03" duration="1" complete="0" expand="true">
+                <depend id="21" type="2" difference="0" hardness="Rubber"/>
+                <depend id="36" type="2" difference="0" hardness="Rubber"/>
+                <depend id="55" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="21" uid="d4bbf8031e71491cab61dec3bef59aa5" name="Implementar desativação e reativação de usuários, incluindo bloqueio de acesso para usuários inativos" meeting="false" start="2026-11-04" duration="2" complete="0" expand="true">
+                <depend id="37" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="55" uid="570001bb8ac64d259f6c6453f5b0bb4f" name="Implementar controle de acesso para restringir o gerenciamento de usuários ao administrador" meeting="false" start="2026-11-04" duration="1" complete="0" expand="true">
+                <depend id="63" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="24" uid="78289ac5ceec49f38c98bd1afb85348d" name="Implementar criação da avaliação vinculada à reserva e à quadra, incluindo validação da reserva concluída, nota de 1 a 5 estrelas e comentário de até 300 caracteres" meeting="false" start="2026-11-11" duration="2" complete="0" expand="true">
+                <depend id="25" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="25" uid="d8c41c3626e544489d4a012daa70ca21" name="Implementar consulta das avaliações e cálculo/atualização da nota média da quadra" meeting="false" start="2026-11-13" duration="1" complete="0" expand="true">
+                <depend id="39" type="2" difference="0" hardness="Rubber"/>
+                <depend id="40" type="2" difference="0" hardness="Rubber"/>
+            </task>
+        </task>
+        <task id="43" uid="c8f8489986864dadaada4a54b614ee95" name="Front-end" meeting="false" start="2026-10-06" duration="32" complete="0" expand="false">
+            <task id="45" uid="34639256d9714a3bb08a311530848334" name="Criar tela de consulta e detalhes das quadras" meeting="false" start="2026-11-05" duration="1" complete="0" expand="true">
+                <depend id="28" type="2" difference="0" hardness="Rubber"/>
+                <depend id="40" type="2" difference="0" hardness="Rubber"/>
+                <depend id="56" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="56" uid="97258edd52684f37be0bd11b6fb95738" name="Integrar consulta das quadras e exibir disponibilidade de datas e horários, incluindo indicação de horários indisponíveis" meeting="false" start="2026-11-06" duration="1" complete="0" expand="true"/>
+            <task id="28" uid="1102b78f3d44464293508abe15c301a1" name="Criar formulário de reserva com quantidade de jogadores e validações de interface" meeting="false" start="2026-11-06" duration="1" complete="0" expand="true">
+                <depend id="57" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="57" uid="b1ef942b0ebf4dd48fb2bb011eb1e8c6" name="Integrar criação da reserva e exibir mensagens de erro para limite de jogadores ou horário ocupado" meeting="false" start="2026-11-11" duration="2" complete="0" expand="true">
+                <depend id="58" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="58" uid="edbc44f47bf846d8a801261a9d2abd6c" name="Criar interface de pagamento/garantia e exibir situação da reserva/pagamento, incluindo expiração" meeting="false" start="2026-11-13" duration="1" complete="0" expand="true"/>
+            <task id="29" uid="670bdde79852445dba7caf3172532c7c" name="Criar tela de consulta de reservas pelo usuário" meeting="false" start="2026-10-06" duration="1" complete="0" expand="true">
+                <depend id="59" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="59" uid="594be8ca309a41c5ad554d6c9bba55e6" name="Integrar consulta das reservas do usuário e ação de cancelamento, exibindo a regra de 24 horas e informações sobre estorno" meeting="false" start="2026-11-17" duration="2" complete="0" expand="true">
+                <depend id="65" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="32" uid="bb43a59816994f6790e858e652850b57" name="Criar formulário de cadastro da quadra com dados, envio de fotos, validação dos campos obrigatórios e limite da descrição" meeting="false" start="2026-10-06" duration="3" complete="0" expand="true">
+                <depend id="51" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="51" uid="3c7e438cd85641a3832ba41065819db4" name="Integrar cadastro à API e exibir mensagens de sucesso/erro" meeting="false" start="2026-11-04" duration="1" complete="0" expand="true"/>
+            <task id="34" uid="ec7b1cf4b16e4ff3b8b56aee8c8b1804" name="Criar tela de consulta das reservas da quadra para o admin da quadra" meeting="false" start="2026-10-06" duration="1" complete="0" expand="true">
+                <depend id="61" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="35" uid="801dd3f4f27845a395c709c15dcf46b7" name="Integrar consulta e exibição dos dados da quadra" meeting="false" start="2026-11-05" duration="1" complete="0" expand="true">
+                <depend id="60" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="60" uid="2bd63923e0fc40d788132738dbeb894f" name="Criar interface para gerenciamento de datas/horários disponíveis e integrar à API" meeting="false" start="2026-11-09" duration="3" complete="0" expand="true"/>
+            <task id="61" uid="9ac33fcd4a304873bbdb823aa4647de0" name="Integrar consultas das reservas da à API e exibir seus clientes, data e horário" meeting="false" start="2026-11-16" duration="1" complete="0" expand="true"/>
+            <task id="36" uid="7ee7f6c7388943afaa6ecad0a44f4d9b" name="Criar tela de listagem de usuários com nome, e-mail, papel e status, incluindo pesquisa" meeting="false" start="2026-11-04" duration="1" complete="0" expand="true">
+                <depend id="62" type="2" difference="0" hardness="Rubber"/>
+                <depend id="63" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="62" uid="994b7d3e96eb4d7ca36bc346efcea34e" name="Integrar listagem e pesquisa à API de usuários" meeting="false" start="2026-11-05" duration="1" complete="0" expand="true">
+                <depend id="37" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="37" uid="35b41d0e0730403d8f0cbe7362e9fc5a" name="Implementar ações de desativação/reativação, confirmação e atualização do status exibido" meeting="false" start="2026-11-06" duration="3" complete="0" expand="true"/>
+            <task id="63" uid="b771fb8a58234af58e2e92be00187071" name="Restringir a tela ao administrador e tratar tentativas de acesso não autorizado" meeting="false" start="2026-11-05" duration="1" complete="0" expand="true"/>
+            <task id="38" uid="854e06ef4f454ae3b56bd0c412570395" name="Criar formulário de avaliação com nota de 1 a 5 estrelas, comentário e contador/limite de 300 caracteres" meeting="false" start="2026-10-06" duration="4" complete="0" expand="true">
+                <depend id="39" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="39" uid="d56288004d2e439d888dae871e8cc1f4" name="Disponibilizar envio de avaliação somente após reserva concluída e exibir mensagem quando o usuário não puder avaliar" meeting="false" start="2026-11-16" duration="1" complete="0" expand="true"/>
+            <task id="40" uid="349b583f99e54a259a0a91b37d49e145" name="Exibir avaliações e nota média da quadra na página da quadra" meeting="false" start="2026-11-16" duration="1" complete="0" expand="true"/>
+        </task>
+        <task id="64" uid="34141b45d4bd4441ad7f205203166703" name="Testes e implantação" meeting="false" start="2026-11-19" duration="5" complete="0" expand="false">
+            <task id="65" uid="a968f5c088814b66bb1336bc9eadf720" name="Executar testes funcionais e de integração do sistema" meeting="false" start="2026-11-19" duration="2" complete="0" expand="true">
+                <depend id="66" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="66" uid="38bda205c372427890c05c01b87b116c" name="Corrigir problemas identificados nos testes e realizar retestes" meeting="false" start="2026-11-23" duration="2" complete="0" expand="true">
+                <depend id="67" type="2" difference="0" hardness="Rubber"/>
+            </task>
+            <task id="67" uid="fceb82936f584aca930e615f8bbc51a0" name="Realizar deploy e validar o sistema em produção" meeting="false" start="2026-11-25" duration="1" complete="0" expand="true"/>
+        </task>
+    </tasks>
+    <resources/>
+    <allocations/>
+    <vacations/>
+    <previous/>
+    <roles roleset-name="Default"/>
+</project>
