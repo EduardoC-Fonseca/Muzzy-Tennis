@@ -1,0 +1,42 @@
+name: muzzi-tennis
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-muzzi_tennis}
+      MYSQL_USER: ${DB_USER:-muzzi}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-muzzi}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Opcional: sobe a API em container (aplica as migrações antes de iniciar).
+  #   docker compose --profile api up --build
+  api:
+    profiles: ["api"]
+    build: .
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  mysql_data:
