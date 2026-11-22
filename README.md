@@ -35,7 +35,18 @@ Foco em gestão e rentabilidade. O proprietário tem total controle sobre seus e
 ## Tecnologias Utilizadas
 
 - **Frontend/Web:** [Flutter Web](https://flutter.dev/multi-platform/web)
-- *(Ainda a decidir outras tecnologias que vamos usar, como Firebase, Node.js, PostgreSQL, etc. para o backend/banco de dados)*
+- **Backend:** Python 3.12 · FastAPI · SQLAlchemy 2 · Alembic — ver [backend/README.md](backend/README.md)
+- **Banco de dados:** MySQL 8 (via Docker Compose em desenvolvimento)
+
+## Documentação
+
+- [Documento de Visão](docs/gerenciamento/documento_visao.md)
+- [Cronograma / EAP](docs/gerenciamento/cronograma.md)
+- [Gerenciamento de Riscos](docs/gerenciamento/documento_riscos.md)
+- [Modelo de Dados](docs/db/modelo_dados.md)
+- [Pendências](docs/pendencias.md)
+
+Os `.md` são conversões dos PDFs em `docs/` para consulta durante o desenvolvimento; os PDFs continuam sendo a versão oficial.
 
 ## Premissas do Projeto
 
