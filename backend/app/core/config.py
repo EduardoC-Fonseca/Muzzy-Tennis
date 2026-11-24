@@ -40,6 +40,7 @@ class Settings(BaseSettings):
 
     upload_dir: str = "uploads"
     upload_max_bytes: int = 5 * 1024 * 1024
+    fotos_max_por_quadra: int = 10
 
     @field_validator("cors_origins", mode="before")
     @classmethod
