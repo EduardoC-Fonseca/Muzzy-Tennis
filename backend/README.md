@@ -9,6 +9,7 @@ Artefatos de referência (fonte da verdade para regras de negócio):
 - [Cronograma / EAP](../docs/gerenciamento/cronograma.md) — tarefas do backend e status
 - [Riscos](../docs/gerenciamento/documento_riscos.md)
 - [Pendências](../docs/pendencias.md) — decisões em aberto que bloqueiam tarefas
+- [Contrato de integração com o front-end](../docs/integracao_frontend.md) — **atualize junto com qualquer mudança de endpoint, campo, validação, erro ou enum**
 
 ## Como rodar (desenvolvimento)
 
@@ -53,9 +54,10 @@ Fluxo de uma requisição: **rota** (valida com schema) → **service** (regras,
 
 ## Convenções
 
+- **Erros de validação** de entrada saem como `422` com `code = VALIDACAO` e `erros[{campo, mensagem}]` em português (`app/core/exceptions.py`).
 - **Erros:** os serviços lançam subclasses de `AppError` (`NaoEncontradoError`, `ConflitoError`, `RegraNegocioError`, `AcessoNegadoError`...). A API responde `{"detail": "...", "code": "CODIGO"}`; o front-end deve se basear em `code` (risco R4).
 - **Autorização:** `UsuarioAtual`, `AdminAtual`, `DonoQuadraAtual` ou `Depends(exigir_papel(...))` em `app/api/deps.py`. Usuário inativo perde acesso na hora, mesmo com token válido (CT17).
-- **Datas:** tudo em **UTC** no banco (`app.db.base.utcnow`).
+- **Datas:** tudo em **UTC** no banco (`app.db.base.utcnow`); nas respostas use `DataHoraUTC` (sai com `Z`) e, para dinheiro, `Dinheiro` (sai como número) — `app/schemas/common.py`.
 - **Clientes não fazem login:** são gravados em `usuarios` sem senha a partir dos dados da reserva (decisão D1).
 - **Erros de banco no MySQL:** violação de `CHECK` chega como `OperationalError` (código 3819), não `IntegrityError`; violação de `UNIQUE`/FK chega como `IntegrityError`.
 

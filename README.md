@@ -45,6 +45,7 @@ Foco em gestão e rentabilidade. O proprietário tem total controle sobre seus e
 - [Gerenciamento de Riscos](docs/gerenciamento/documento_riscos.md)
 - [Modelo de Dados](docs/db/modelo_dados.md)
 - [Pendências](docs/pendencias.md)
+- [Contrato de integração front-end ↔ backend](docs/integracao_frontend.md)
 
 Os `.md` são conversões dos PDFs em `docs/` para consulta durante o desenvolvimento; os PDFs continuam sendo a versão oficial.
 
