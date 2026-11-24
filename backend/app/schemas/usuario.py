@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import PapelUsuario
+from app.schemas.common import DataHoraUTC
 
 
 class UsuarioPublico(BaseModel):
@@ -16,4 +15,4 @@ class UsuarioPublico(BaseModel):
     telefone: str | None
     papel: PapelUsuario
     status: bool  # True = ativo
-    criado_em: datetime
+    criado_em: DataHoraUTC
