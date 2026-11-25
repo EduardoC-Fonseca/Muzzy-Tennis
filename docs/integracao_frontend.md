@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.2.0 · **Última atualização:** 23/11/2026
+**Versão do contrato:** 0.3.0 · **Última atualização:** 24/11/2026
 
 ---
 
@@ -43,8 +43,8 @@ Recomendação: centralizar a URL base num único lugar do app (ex.: `const apiB
 | Perfil | Faz login? | Como acessa |
 |---|---|---|
 | `cliente` | **Não** | Reserva informando os dados de identificação (próximas tarefas). |
-| `dono_quadra` | Sim | Token JWT |
-| `administrador` | Sim | Token JWT |
+| `dono_quadra` | Sim | Cria a própria conta em `POST /auth/registro` (ver 6.4) e depois faz login. Token JWT. |
+| `administrador` | Sim | Conta criada só pela equipe, por script (não há cadastro público). Token JWT. |
 
 ### Fluxo
 
@@ -101,8 +101,9 @@ Sugestão: converter `erros` num `Map<String, String>` e usar como `errorText` d
 | 404 | `NAO_ENCONTRADO` | Recurso genérico inexistente | — |
 | 404 | `QUADRA_NAO_ENCONTRADA` | Quadra inexistente | — |
 | 404 | `FOTO_NAO_ENCONTRADA` | Foto inexistente ou de outra quadra | — |
+| 409 | `EMAIL_JA_CADASTRADO` | Cadastro de dono com e-mail já usado por outra conta (ver 6.4) | Erro no campo e-mail, com link para o login |
 | 422 | `VALIDACAO` | Campos inválidos ou ausentes (ver 4.1) | Erro em cada campo |
-| 422 | `FOTOS_REJEITADAS` | Nenhuma foto do envio foi aceita (ver 6.5) | Listar `rejeitadas[].motivo` |
+| 422 | `FOTOS_REJEITADAS` | Nenhuma foto do envio foi aceita (ver 6.6) | Listar `rejeitadas[].motivo` |
 
 ## 5. Enums
 
@@ -174,7 +175,34 @@ Requer token. Devolve o usuário autenticado (`UsuarioPublico`):
 ```
 Use `papel` para decidir quais telas exibir.
 
-### 6.4 `POST /quadras` ✅ — Cadastrar quadra
+### 6.4 `POST /auth/registro` ✅ — Cadastro de dono de quadra
+
+Público (sem token). Usado pela tela `/cadastro-login`, aberta pelo link "Cadastre-se aqui" do login. Cria sempre uma conta de **dono de quadra**, já ativa, sem aprovação do administrador. Administradores não se cadastram por aqui.
+
+Corpo JSON:
+
+| Campo | Tipo | Obrigatório | Regras | Exemplo |
+|---|---|---|---|---|
+| `nome` | texto | sim | 1–150 caracteres; espaços repetidos viram um só | `"Maria Souza"` |
+| `email` | texto | sim | formato de e-mail, até 150; gravado em minúsculas; **único** | `"maria@email.com"` |
+| `telefone` | texto | não | DDD + número (10 a 13 dígitos); aceita `( ) - +` e espaços; `""` vira `null` | `"(31) 99999-9999"` |
+| `senha` | texto | sim | **8 a 128** caracteres; não pode ser só espaços; não é aparada | `"minha-senha-123"` |
+
+Não há campo `papel`: enviá-lo dá `422` ("Campo não permitido."). A **confirmação de senha** é validada só na tela; não envie esse campo.
+
+```json
+201 {
+  "id": 4, "nome": "Maria Souza", "email": "maria@email.com", "telefone": "(31) 99999-9999",
+  "papel": "dono_quadra", "status": true, "criado_em": "2026-11-24T14:10:00Z"
+}
+```
+A resposta **não traz token**. Para entrar direto após o cadastro, chame `POST /auth/login` com o e-mail e a senha digitados.
+
+Erros:
+- `422 VALIDACAO`: campos ausentes ou inválidos, com `erros[]` por campo.
+- `409 EMAIL_JA_CADASTRADO`: o e-mail já pertence a outra conta. Isso inclui um **cliente que já reservou** com esse e-mail, porque o e-mail é único em `usuarios`.
+
+### 6.5 `POST /quadras` ✅ — Cadastrar quadra
 
 **Tarefa 12 · HU03 · CT07, CT08, CT10.** Requer token de **`dono_quadra`**; administrador e cliente recebem `403 ACESSO_NEGADO`. A quadra fica vinculada ao dono autenticado (não envie `dono_id`).
 
@@ -213,7 +241,7 @@ Use `papel` para decidir quais telas exibir.
 
 Mensagens de validação mais comuns: `Campo obrigatório.` · `Máximo de 500 caracteres.` · `Deve ser maior que 0.` · `Use no máximo 2 casas decimais.` · `UF inválida. Use a sigla do estado, ex.: MG.` · `CEP inválido. Use o formato 00000-000.` · `Valor inválido. Opções: 'saibro', 'rapida', 'grama' ou 'sintetico'.`
 
-### 6.5 `POST /quadras/{quadra_id}/fotos` ✅ — Enviar fotos
+### 6.6 `POST /quadras/{quadra_id}/fotos` ✅ — Enviar fotos
 
 **Tarefa 12 · CT09.** Requer token do **dono da quadra** ou de um **administrador**. Corpo **`multipart/form-data`** com um ou mais arquivos no campo **`fotos`** (repita o campo para cada arquivo).
 
@@ -258,7 +286,7 @@ for (final f in arquivosSelecionados) {          // ex.: file_picker com withDat
 final resp = await http.Response.fromStream(await req.send());
 ```
 
-### 6.6 `DELETE /quadras/{quadra_id}/fotos/{foto_id}` ✅ — Remover foto
+### 6.7 `DELETE /quadras/{quadra_id}/fotos/{foto_id}` ✅ — Remover foto
 
 Requer token do dono da quadra ou de um administrador. Responde **`204`** sem corpo. Se a foto removida era a `principal`, a próxima (menor `ordem`) é promovida automaticamente.
 
@@ -300,6 +328,28 @@ Validações recomendadas também na interface, para feedback imediato e espelha
 | CEP | `TextFormField` com máscara | `cep` |
 | Fotos | seletor múltiplo de imagens | enviadas depois, em `POST /quadras/{id}/fotos` (campo `fotos`) |
 
+### 7.3 Cadastro de dono de quadra (tela `/cadastro-login`)
+
+```
+[Login] → "Cadastre-se aqui" → [/cadastro-login preenchido] → POST /auth/registro
+    ├─ 422 VALIDACAO → mostrar erros[] nos campos; parar
+    ├─ 409 EMAIL_JA_CADASTRADO → erro no e-mail + link "Já tem conta? Entrar"
+    └─ 201 → POST /auth/login com o mesmo e-mail e senha → guardar token → área do dono
+            (ou: mensagem de sucesso e voltar para /login)
+```
+
+Validações recomendadas também na interface: e-mail com `TextInputType.emailAddress`, senha com pelo menos 8 caracteres, confirmação de senha igual à senha e máscara de telefone opcional.
+
+### 7.4 Mapeamento de campos — formulário de cadastro de dono
+
+| Campo na tela (sugestão) | Widget sugerido | Campo da API |
+|---|---|---|
+| Nome completo | `TextFormField` (máx. 150) | `nome` |
+| E-mail | `TextFormField`, `keyboardType: emailAddress` | `email` |
+| Telefone (opcional) | `TextFormField` com máscara `(00) 00000-0000` | `telefone` |
+| Senha | `TextFormField`, `obscureText`, mín. 8 | `senha` |
+| Confirmar senha | `TextFormField`, `obscureText` | *(só na tela, não é enviado)* |
+
 ## 8. Endpoints planejados
 
 Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este documento será atualizado quando cada um for implementado.
@@ -320,5 +370,6 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.3.0 | 24/11/2026 | Cadastro público de dono de quadra (`POST /auth/registro`, pendência P03), com o erro `409 EMAIL_JA_CADASTRADO`. Seções 6.4 a 6.6 renumeradas para 6.5 a 6.7. Fluxo e mapeamento da tela `/cadastro-login` (7.3 e 7.4). |
 | 0.2.0 | 23/11/2026 | Cadastro de quadras (`POST /quadras`) e envio/remoção de fotos (tarefa 12). Padronização dos erros de validação (`code = VALIDACAO` com `erros[]` em português). Datas passam a sair em UTC com `Z`; valores monetários como número. |
 | 0.1.0 | 22/11/2026 | Primeira versão: `GET /health`, `POST /auth/login`, `GET /auth/me`, formato de erro `{detail, code}`. |

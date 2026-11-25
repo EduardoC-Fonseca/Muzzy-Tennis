@@ -13,23 +13,98 @@ Artefatos de referência (fonte da verdade para regras de negócio):
 
 ## Como rodar (desenvolvimento)
 
-Pré-requisitos: Python 3.12+, Docker.
+Pré-requisitos: Docker e, para a opção B, Python 3.12+. O **banco sempre roda no Docker**; a API pode rodar no Docker (A) ou no venv (B).
+
+| | A — API no Docker | B — API no venv |
+|---|---|---|
+| Indicado para | Testar como na entrega, sem instalar Python | Desenvolver: recarrega a cada alteração (`--reload`) e permite depurar |
+| Alterou o código? | Precisa de `--build` de novo | Recarrega sozinho |
+
+As duas usam a porta **8000**: rode **uma de cada vez**.
+
+### 1. Banco de dados (comum às duas)
 
 ```bash
 cd backend
-cp .env.example .env
-docker compose up -d db                 # MySQL 8.4 em localhost:3306
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-alembic upgrade head                    # cria as tabelas
-python -m app.scripts.criar_admin --nome "Admin" --email admin@muzzi.local
-uvicorn app.main:app --reload
+cp .env.example .env            # só na primeira vez
+docker compose up -d db         # MySQL 8.4 em localhost:3306
 ```
 
-- Swagger: <http://localhost:8000/docs> · ReDoc: <http://localhost:8000/redoc>
-- Saúde: `GET /api/v1/health`
+### 2A. API no Docker
 
-Para subir a API também em container: `docker compose --profile api up --build`.
+```bash
+docker compose --profile api up -d --build    # aplica as migrações e sobe em :8000
+docker compose --profile api logs -f api      # acompanhar os logs (Ctrl+C sai)
+docker compose --profile api stop api         # parar a API (o banco continua)
+```
+
+Para rodar os scripts dentro do container, prefixe com `docker compose exec api`, como no passo 3.
+
+### 2B. API no venv
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate     # só na primeira vez
+pip install -e ".[dev]"                                 # só na primeira vez / ao mudar dependências
+alembic upgrade head                                    # aplica as migrações
+uvicorn app.main:app --reload                           # sobe em :8000
+```
+
+### 3. Usuários para teste
+
+Clientes não fazem login. **Donos de quadra** podem se cadastrar pela API (`POST /api/v1/auth/registro`, passo 2 do roteiro do Swagger) ou pelo script. **Administradores** só são criados pelo script. A senha é pedida no terminal. Se o e-mail já existir, o script atualiza o usuário: troca a senha, aplica o papel informado e reativa a conta. Isso serve para redefinir a senha de um usuário de teste.
+
+```bash
+# venv:
+python -m app.scripts.criar_usuario --papel dono_quadra --nome "Dono Teste" --email dono@muzzi.local
+python -m app.scripts.criar_usuario --papel administrador --nome "Admin" --email admin@muzzi.local
+# Docker: o mesmo comando com o prefixo
+docker compose exec api python -m app.scripts.criar_usuario --papel dono_quadra --nome "Dono Teste" --email dono@muzzi.local
+```
+
+## Teste manual pelo Swagger
+
+Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/integracao_frontend.md`](../docs/integracao_frontend.md).
+
+1. **Saúde:** `GET /api/v1/health` → *Try it out* → *Execute*. Esperado: `{"status": "ok", "banco": "ok"}`.
+2. **Cadastro de dono:** `POST /api/v1/auth/registro` com `{"nome": "Maria Souza", "email": "maria@muzzi.local", "telefone": "(31) 99999-9999", "senha": "senha-segura-123"}`. Esperado: `201` com `papel = dono_quadra`. Repetir o mesmo e-mail dá `409 EMAIL_JA_CADASTRADO`; uma senha curta dá `422`.
+3. **Login:** clique em **Authorize** (cadeado, no topo), preencha `username` com o e-mail do dono e `password` com a senha e confirme. Daqui em diante o Swagger envia o token sozinho.
+4. **Conferir o usuário:** `GET /api/v1/auth/me` deve devolver o papel `dono_quadra`.
+5. **Cadastrar quadra (CT07):** `POST /api/v1/quadras` com o corpo abaixo. Esperado: `201`, com `estado` em maiúsculas e o `cep` formatado.
+   ```json
+   {
+     "nome": "Quadra Central", "descricao": "Quadra coberta com iluminação.",
+     "tipo_piso": "saibro", "coberta": true, "limite_jogadores": 4, "preco_hora": 80,
+     "endereco": "Rua das Flores", "numero": "100", "bairro": "Centro",
+     "cidade": "João Monlevade", "estado": "mg", "cep": "35930000"
+   }
+   ```
+6. **Validações (CT08, CT10):** reenvie com `{}`, com uma `descricao` de 501 caracteres, `"tipo_piso": "carpete"` ou `"cep": "123"`. Esperado: `422`, `code = VALIDACAO` e a lista `erros` indicando cada campo.
+7. **Fotos (CT09):** `POST /api/v1/quadras/{quadra_id}/fotos` com o `id` da quadra. Em `fotos`, use *Add string item* para anexar vários arquivos e misture uma imagem (JPEG/PNG/WebP) com um PDF ou TXT. Esperado: `201`, a imagem em `fotos` e o outro arquivo em `rejeitadas`, com o motivo. Abra `http://localhost:8000` + a `url` devolvida para ver a imagem. Só arquivos inválidos dão `422 FOTOS_REJEITADAS`.
+8. **Permissões:** faça login como administrador (Authorize → *Logout* → login de novo) e tente `POST /quadras`: `403`. Sem login: `401`.
+9. **Remover foto:** `DELETE /api/v1/quadras/{quadra_id}/fotos/{foto_id}` → `204`. Se era a principal, a próxima foto vira a principal (confira no banco).
+
+## Acessar o banco (DBeaver ou outro cliente)
+
+Com o container `db` rodando, crie uma conexão **MySQL** no DBeaver:
+
+| Campo | Valor |
+|---|---|
+| Host / Porta | `localhost` / `3306` |
+| Database | `muzzi_tennis` (o banco dos testes automatizados é `muzzi_tennis_test`) |
+| Usuário / Senha | `muzzi` / `muzzi` (ou `root` / `root`, valores do `.env`) |
+| Driver properties | `allowPublicKeyRetrieval = true` e `useSSL = false` |
+
+As *driver properties* evitam o erro **"Public Key Retrieval is not allowed"**, comum ao conectar no MySQL 8 sem SSL. Ficam na aba *Driver properties* da conexão.
+
+Pelo terminal, sem cliente gráfico: `docker compose exec db mysql -umuzzi -pmuzzi muzzi_tennis`.
+
+### Recomeçar do zero
+
+```bash
+docker compose --profile api down -v    # remove containers E o volume do banco (apaga todos os dados)
+rm -rf uploads/                         # fotos enviadas
+```
+Depois, repita os passos 1 a 3.
 
 ## Estrutura
 
