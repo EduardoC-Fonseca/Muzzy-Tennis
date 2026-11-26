@@ -23,12 +23,12 @@ class _BarraPesquisaState extends State<SearchBarMuzziTennis> {
     {
       'nome': 'Arena Tennis',
       'cidade': 'Belo Horizonte',
-      'superficie': TipoSuperficie.dura,
+      'superficie': TipoSuperficie.rapida,
     },
     {
       'nome': 'Clube Tennis',
       'cidade': 'João Monlevade',
-      'superficie': TipoSuperficie.dura,
+      'superficie': TipoSuperficie.rapida,
     },
   ];
 
@@ -69,6 +69,7 @@ class _BarraPesquisaState extends State<SearchBarMuzziTennis> {
           width: 250,
           child: DropdownButtonFormField<TipoSuperficie>(
             initialValue: superficieSelecionada,
+            isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Superfície',
               border: OutlineInputBorder(),
@@ -93,7 +94,7 @@ class _BarraPesquisaState extends State<SearchBarMuzziTennis> {
             },
           ),
         ),
-        const SizedBox(),
+        const SizedBox(width: 16),
         SizedBox(
           height: 50,
           child: ElevatedButton.icon(
