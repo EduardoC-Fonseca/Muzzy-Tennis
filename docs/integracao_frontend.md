@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.4.0 · **Última atualização:** 25/11/2026
+**Versão do contrato:** 0.4.1 · **Última atualização:** 26/11/2026
 
 ---
 
@@ -95,11 +95,12 @@ Sugestão: converter `erros` num `Map<String, String>` e usar como `errorText` d
 
 | HTTP | `code` | Quando | Sugestão na interface |
 |---|---|---|---|
-| 401 | `NAO_AUTENTICADO` | Sem token, token inválido ou expirado | Redirecionar para o login |
+| 401 | `NAO_AUTENTICADO` | Sem token (`"Faça login para acessar este recurso."`), token inválido ou expirado | Redirecionar para o login |
 | 401 | `CREDENCIAIS_INVALIDAS` | Login com e-mail ou senha errados | Mensagem no formulário de login |
 | 403 | `USUARIO_INATIVO` | Conta desativada (login ou token válido) | Mensagem e logout |
 | 403 | `ACESSO_NEGADO` | Perfil sem permissão, ou recurso de outro proprietário | Mensagem "sem permissão" |
-| 404 | `NAO_ENCONTRADO` | Recurso genérico inexistente | — |
+| 404 | `NAO_ENCONTRADO` | Recurso genérico ou endereço inexistente | — |
+| 405 | `METODO_NAO_PERMITIDO` | Método HTTP errado para o endereço (ex.: `PUT` onde só há `GET`) | Erro de programação: revisar a chamada |
 | 404 | `QUADRA_NAO_ENCONTRADA` | Quadra inexistente | — |
 | 404 | `FOTO_NAO_ENCONTRADA` | Foto inexistente ou de outra quadra | — |
 | 409 | `EMAIL_JA_CADASTRADO` | Cadastro de dono com e-mail já usado por outra conta (ver 6.4) | Erro no campo e-mail, com link para o login |
@@ -450,6 +451,7 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.4.1 | 26/11/2026 | Correção: requisição sem token agora responde `401` no formato padrão, com `code = NAO_AUTENTICADO` (antes vinha `{"detail": "Not authenticated"}`, sem `code`). Erros do próprio framework (endereço inexistente, método não permitido) também saem com `code`. Novo código `405 METODO_NAO_PERMITIDO`. |
 | 0.4.0 | 25/11/2026 | Consulta de quadras (tarefa 13): `GET /quadras` (busca pública por cidade, tipo de piso e coberta, paginada), `GET /quadras/{id}` (detalhe público; inativa só para o dono e o administrador) e `GET /quadras/minhas` (quadras do dono). Convenção de listagens paginadas. Fluxo e mapeamento da busca (7.5 e 7.6). |
 | 0.3.0 | 24/11/2026 | Cadastro público de dono de quadra (`POST /auth/registro`, pendência P03), com o erro `409 EMAIL_JA_CADASTRADO`. Seções 6.4 a 6.6 renumeradas para 6.5 a 6.7. Fluxo e mapeamento da tela `/cadastro-login` (7.3 e 7.4). |
 | 0.2.0 | 23/11/2026 | Cadastro de quadras (`POST /quadras`) e envio/remoção de fotos (tarefa 12). Padronização dos erros de validação (`code = VALIDACAO` com `erros[]` em português). Datas passam a sair em UTC com `Z`; valores monetários como número. |
