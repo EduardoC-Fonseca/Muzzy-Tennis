@@ -51,4 +51,57 @@ class AuthService {
     }
     return dados;
   }
+
+  Future<String> obterTokenCsrf() async {
+    final url = Uri.base.resolve('/api/v1/auth/csrf');
+    final resposta = await http.get(url);
+
+    if (resposta.statusCode == 401) {
+      throw Exception('Sessão inválida ou expirada.');
+    }
+
+    if (resposta.statusCode != 200) {
+      throw Exception(
+        'Erro ao recuperar token CSRF (HTTP ${resposta.statusCode}).',
+      );
+    }
+
+    final dados = jsonDecode(resposta.body);
+    if (dados is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Resposta CSRF inválida.',
+      );
+    }
+
+    final tokenCsrf = dados['csrf_token'];
+    if (tokenCsrf is! String || tokenCsrf.isEmpty) {
+      throw const FormatException(
+        'A API não retornou um token CSRF válido.',
+      );
+    }
+    return tokenCsrf;
+  }
+
+  Future<void> logout() async {
+    final tokenCsrf = await obterTokenCsrf();
+    final url = Uri.base.resolve('/api/v1/auth/logout');
+    final resposta = await http.post(
+      url,
+      headers: {
+        'X-CSRF-Token': tokenCsrf,
+      },
+    );
+
+    if (resposta.statusCode == 401) {
+      throw Exception('Sessão inválida ou expirada.');
+    }
+    if (resposta.statusCode == 403) {
+      throw Exception('Não foi possível validar a segurança da sessão.');
+    }
+    if (resposta.statusCode != 204) {
+      throw Exception(
+        'Erro ao encerrar sessão (HTTP ${resposta.statusCode}).',
+      );
+    }
+  }
 }

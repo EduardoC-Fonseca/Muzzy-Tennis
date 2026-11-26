@@ -6,6 +6,7 @@ import 'package:muzzi_tennis/widgets/app_navbar.dart';
 import 'package:muzzi_tennis/widgets/campo_email.dart';
 import 'package:muzzi_tennis/widgets/campo_senha.dart';
 import 'package:muzzi_tennis/services/auth_service.dart';
+import 'package:muzzi_tennis/services/auth_session.dart';
 import 'package:muzzi_tennis/widgets/warning_app_snackbar.dart';
 
 class LoginPage extends StatefulWidget {
@@ -44,11 +45,16 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _authService.login(email: email, senha: senha);
-      await _authService.obterUsuario();
-
+      final usuario = await _authService.obterUsuario();
       if (!mounted) return;
-        AppSnackBar.sucesso(context, 'Login realizado com sucesso!');
-      } 
+      AuthSession.instance.iniciarSessao(usuario:usuario);
+      AppSnackBar.sucesso(context, 'Login realizado com sucesso!');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/',
+        (route) => false,
+      );
+    } 
     catch (erro) {
       if (!mounted) return;
       final mensagem = erro.toString().replaceFirst('Exception: ', '');

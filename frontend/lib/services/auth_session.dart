@@ -5,20 +5,16 @@ class AuthSession extends ChangeNotifier {
 
   static final AuthSession instance = AuthSession._();
 
-  String? _token;
   Map<String, dynamic>? _usuario;
-  String? get token => _token;
   Map<String, dynamic>? get usuario => _usuario;
-  bool get autenticado => _token != null && _usuario != null;
+  bool get autenticado => _usuario != null;
 
-  void iniciarSessao({required String token, required Map<String, dynamic> usuario}) {
-    _token = token;
-    _usuario = Map.unmodifiable(usuario);
+  void iniciarSessao({required Map<String, dynamic> usuario}) {
+    _usuario = Map<String, dynamic>.unmodifiable(usuario);
     notifyListeners();
   }
 
   void encerrarSessao() {
-    _token = null;
     _usuario = null;
     notifyListeners();
   }
