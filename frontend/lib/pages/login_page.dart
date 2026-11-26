@@ -5,6 +5,8 @@ import 'package:muzzi_tennis/core/app_theme.dart';
 import 'package:muzzi_tennis/widgets/app_navbar.dart';
 import 'package:muzzi_tennis/widgets/campo_email.dart';
 import 'package:muzzi_tennis/widgets/campo_senha.dart';
+import 'package:muzzi_tennis/services/auth_service.dart';
+import 'package:muzzi_tennis/widgets/warning_app_snackbar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,12 +18,49 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
+  final _authService = AuthService();
+
+  bool _carregando = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _senhaController.dispose();
     super.dispose();
+  }
+
+  Future<void> _entrar() async {
+    final email = _emailController.text.trim();
+    final senha = _senhaController.text;
+
+    if (email.isEmpty || senha.isEmpty) {
+      AppSnackBar.aviso(context, 'Preencha o e-mail e a senha.');
+      return;
+    }
+
+    setState(() {
+      _carregando = true;
+    });
+
+    try {
+      final token = await _authService.login(email: email, senha: senha);
+      await _authService.obterUsuario(token);
+
+      if (!mounted) return;
+        AppSnackBar.sucesso(context, 'Login realizado com sucesso!');
+      } 
+    catch (erro) {
+      if (!mounted) return;
+      final mensagem = erro.toString().replaceFirst('Exception: ', '');
+      AppSnackBar.erro(context, mensagem);
+    } 
+    finally {
+      if (mounted) {
+        setState(() {
+          _carregando = false;
+        });
+      }
+    }
   }
 
   @override
@@ -40,9 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: 920,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: 920),
                     child: Container(
                       padding: const EdgeInsets.all(40),
                       decoration: BoxDecoration(
@@ -130,50 +167,50 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
 
                                 const SizedBox(height: 32),
-
-                                CampoEmail(
-                                  controller: _emailController,
-                                ),
+                                CampoEmail(controller: _emailController),
 
                                 const SizedBox(height: 20),
-
-                                CampoSenha(
-                                  controller: _senhaController,
-                                ),
+                                CampoSenha(controller: _senhaController),
 
                                 const SizedBox(height: 24),
-
                                 SizedBox(
                                   height: 52,
                                   child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      debugPrint('Botão de login pressionado',);
-                                    },
+                                    onPressed: _carregando ? null : _entrar,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.verdeMuzziTennis,
+                                      backgroundColor:
+                                          AppTheme.verdeMuzziTennis,
                                       foregroundColor: AppTheme.fundoPreto,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      textStyle:
-                                          GoogleFonts.barlowCondensed(
+                                      textStyle: GoogleFonts.barlowCondensed(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 1,
                                       ),
                                     ),
-                                    icon: const Icon(Icons.login),
-                                    label: const Text('ENTRAR'),
+                                    icon: _carregando
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: AppTheme.fundoPreto,
+                                            ),
+                                          )
+                                        : const Icon(Icons.login),
+                                    label: Text(
+                                      _carregando ? 'ENTRANDO...' : 'ENTRAR',
+                                    ),
                                   ),
                                 ),
 
                                 const SizedBox(height: 24),
                                 Wrap(
                                   alignment: WrapAlignment.center,
-                                  crossAxisAlignment:
-                                      WrapCrossAlignment.center,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
                                   spacing: 4,
                                   children: [
                                     Text(
@@ -192,10 +229,12 @@ class _LoginPageState extends State<LoginPage> {
                                         );
                                       },
                                       style: TextButton.styleFrom(
-                                        foregroundColor: AppTheme.verdeMuzziTennis,
+                                        foregroundColor:
+                                            AppTheme.verdeMuzziTennis,
                                         padding: EdgeInsets.zero,
                                         minimumSize: Size.zero,
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
                                       ),
                                       child: Text(
                                         'Cadastre-se aqui',
@@ -203,7 +242,8 @@ class _LoginPageState extends State<LoginPage> {
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
                                           decoration: TextDecoration.underline,
-                                          decorationColor: AppTheme.verdeMuzziTennis,
+                                          decorationColor:
+                                              AppTheme.verdeMuzziTennis,
                                         ),
                                       ),
                                     ),
