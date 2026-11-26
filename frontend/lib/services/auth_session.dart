@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:muzzi_tennis/services/auth_service.dart';
 
 class AuthSession extends ChangeNotifier {
   AuthSession._();
@@ -12,6 +13,11 @@ class AuthSession extends ChangeNotifier {
   void iniciarSessao({required Map<String, dynamic> usuario}) {
     _usuario = Map<String, dynamic>.unmodifiable(usuario);
     notifyListeners();
+  }
+
+  Future<void> restaurarSessao() async {
+    final usuario = await AuthService().obterUsuario();
+   iniciarSessao(usuario: usuario);
   }
 
   void encerrarSessao() {
