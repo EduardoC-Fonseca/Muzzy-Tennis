@@ -57,8 +57,31 @@ def test_token_perde_validade_ao_desativar_usuario(client, db, criar_usuario):
     assert resp.json()["code"] == "USUARIO_INATIVO"
 
 
-def test_sem_token_retorna_401(client):
-    assert client.get(ME).status_code == 401
+def test_sem_token_retorna_401_no_formato_padrao(client):
+    resp = client.get(ME)
+    assert resp.status_code == 401
+    assert resp.json() == {
+        "detail": "Faça login para acessar este recurso.",
+        "code": "NAO_AUTENTICADO",
+    }
+    assert resp.headers["www-authenticate"] == "Bearer"
+
+
+def test_erros_do_framework_saem_no_formato_padrao(client):
+    resp = client.get("/api/v1/nao-existe")
+    assert resp.status_code == 404
+    assert resp.json()["code"] == "NAO_ENCONTRADO"
+
+    resp = client.put("/api/v1/health")
+    assert resp.status_code == 405
+    assert resp.json()["code"] == "METODO_NAO_PERMITIDO"
+
+
+def test_openapi_marca_fotos_como_arquivo(client):
+    """O Swagger só mostra o seletor de arquivo com format: binary."""
+    esquemas = client.get("/openapi.json").json()["components"]["schemas"]
+    corpo = next(v for k, v in esquemas.items() if k.startswith("Body_enviar_fotos"))
+    assert corpo["properties"]["fotos"]["items"]["format"] == "binary"
 
 
 def test_token_invalido_retorna_401(client):

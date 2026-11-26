@@ -20,6 +20,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 class AppError(Exception):
@@ -122,6 +123,14 @@ def formatar_erros_validacao(erros: list[dict[str, Any]]) -> list[dict[str, str]
     return [{"campo": _campo(tuple(e.get("loc", ()))), "mensagem": _mensagem(e)} for e in erros]
 
 
+_HTTP_PADRAO: dict[int, tuple[str, str]] = {
+    401: ("NAO_AUTENTICADO", "Faça login para acessar este recurso."),
+    403: ("ACESSO_NEGADO", "Você não tem permissão para acessar este recurso."),
+    404: ("NAO_ENCONTRADO", "Recurso não encontrado."),
+    405: ("METODO_NAO_PERMITIDO", "Método não permitido para este endereço."),
+}
+
+
 def registrar_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error_handler(_: Request, exc: AppError) -> JSONResponse:
@@ -130,6 +139,17 @@ def registrar_handlers(app: FastAPI) -> None:
             status_code=exc.status_code,
             content=jsonable_encoder({"detail": exc.detail, "code": exc.code, **exc.extra}),
             headers=headers,
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_error_handler(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+        """Erros levantados pelo próprio framework (rota inexistente, método não permitido...)
+        também saem no formato padrão, com ``code``."""
+        code, detail = _HTTP_PADRAO.get(exc.status_code, ("ERRO", str(exc.detail)))
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": detail, "code": code},
+            headers=getattr(exc, "headers", None),
         )
 
     @app.exception_handler(RequestValidationError)

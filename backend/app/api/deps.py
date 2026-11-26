@@ -23,6 +23,9 @@ def get_usuario_atual(db: DbSession, request: Request, token: Annotated[str | No
 oauth2_opcional = OAuth2PasswordBearer(
     tokenUrl=f"{settings.api_prefix}/auth/login", auto_error=False
 )
+# auto_error=False: a falta de token é tratada aqui, para responder no formato padrão
+# ({"detail", "code": "NAO_AUTENTICADO"}) em vez do "Not authenticated" do FastAPI.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/auth/login", auto_error=False)
 
 
 def _usuario_do_token(db: Session, token: str) -> Usuario:
@@ -48,12 +51,16 @@ def _usuario_do_token(db: Session, token: str) -> Usuario:
     return usuario
 
 
-def get_usuario_atual(db: DbSession, token: Annotated[str, Depends(oauth2_scheme)]) -> Usuario:
+def get_usuario_atual(
+    db: DbSession, token: Annotated[str | None, Depends(oauth2_scheme)]
+) -> Usuario:
+    if not token:
+        raise NaoAutenticadoError("Faça login para acessar este recurso.")
     return _usuario_do_token(db, token)
 
 
 def get_usuario_opcional(
-    db: DbSession, token: Annotated[str | None, Depends(oauth2_opcional)]
+    db: DbSession, token: Annotated[str | None, Depends(oauth2_scheme)]
 ) -> Usuario | None:
     """Rotas públicas que mostram mais dados a quem está logado. Sem token: ``None``.
     Um token enviado, mas inválido, continua dando 401 (não é ignorado em silêncio)."""
