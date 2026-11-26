@@ -1,6 +1,7 @@
 name: muzzi-tennis
 services:
   db:
+    container_name: muzzi-db
     image: mysql:8.4
     restart: unless-stopped
     ports:
@@ -24,8 +25,11 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
+    networks:
+      - muzzi-network  
 
   api:
+    container_name: muzzi-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -40,11 +44,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
+    networks:
+      - muzzi-network
     volumes:
       - ./backend/uploads:/app/uploads
 
   frontend:
+    container_name: muzzi-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -53,6 +59,13 @@ services:
       - "8080:80"
     depends_on:
       - api
+    networks:
+      - muzzi-network
 
 volumes:
   mysql_data:
+
+networks:
+  muzzi-network:
+    name: muzzi-network
+    driver: bridge
