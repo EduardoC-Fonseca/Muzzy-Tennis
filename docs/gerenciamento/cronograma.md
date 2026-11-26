@@ -17,9 +17,9 @@
 |---|---|---|
 | Emerson | Gerente de Projeto | Plano, histórias, identidade visual, cronograma, requisitos, cenários de teste |
 | Maria Clara | Gerente de Projeto | Plano, histórias, cronograma, requisitos, cenários de teste, protótipo |
-| Eduardo | Indefinida | Front-end, orçamento, benchmarking |
-| Hálisson | Indefinida | **Backend, Banco de dados** |
-| Davi | Indefinida | — |
+| Eduardo | Desenvolvedor Front-end | Front-end, orçamento, benchmarking |
+| Hálisson | Desenvolvedor Back-end | Backend, Banco de dados |
+| Davi | Desenvolvedor Front-end | Front-end, protótipo |
 
 ## Planejamento
 
