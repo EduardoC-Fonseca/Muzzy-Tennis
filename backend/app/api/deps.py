@@ -4,22 +4,21 @@ from collections.abc import Callable
 from typing import Annotated
 
 import jwt
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Cookie, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.exceptions import AcessoNegadoError, NaoAutenticadoError
 from app.core.security import decodificar_token
+from app.core.csrf import validar_token_csrf
 from app.db.session import get_db
 from app.models import PapelUsuario, Usuario
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/auth/login")
+def get_usuario_atual(db: DbSession, request: Request, token: Annotated[str | None, Cookie(alias="muzzi_session")] = None) -> Usuario:
+    if not token:
+        raise NaoAutenticadoError("Usuário não autenticado.")
 
-
-def get_usuario_atual(db: DbSession, token: Annotated[str, Depends(oauth2_scheme)]) -> Usuario:
     try:
         payload = decodificar_token(token)
         usuario_id = int(payload["sub"])
@@ -27,11 +26,18 @@ def get_usuario_atual(db: DbSession, token: Annotated[str, Depends(oauth2_scheme
         raise NaoAutenticadoError("Token inválido ou expirado.") from exc
 
     usuario = db.get(Usuario, usuario_id)
+
     if usuario is None:
         raise NaoAutenticadoError("Usuário não encontrado.")
-    # CT17: usuário desativado perde acesso imediatamente, mesmo com token ainda válido.
     if not usuario.ativo:
         raise AcessoNegadoError("Conta desativada.", code="USUARIO_INATIVO")
+
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        token_csrf = request.headers.get("X-CSRF-Token")
+
+        if not validar_token_csrf(token, token_csrf):
+            raise AcessoNegadoError("Token CSRF ausente ou inválido.", code="CSRF_INVALIDO")
+
     return usuario
 
 
