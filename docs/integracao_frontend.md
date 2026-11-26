@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.3.0 · **Última atualização:** 24/11/2026
+**Versão do contrato:** 0.4.0 · **Última atualização:** 25/11/2026
 
 ---
 
@@ -34,6 +34,7 @@ Recomendação: centralizar a URL base num único lugar do app (ex.: `const apiB
 | Datas e horas | ISO 8601 em **UTC** com sufixo `Z` (ex.: `2026-11-23T23:03:57.621568Z`). Converta para o horário local na exibição (`DateTime.parse(s).toLocal()`). |
 | Valores monetários | Na resposta, sempre **número** (ex.: `95.5`). Na requisição, aceita número ou texto (`80`, `"80.00"`), com no máximo 2 casas decimais. |
 | Enums | Texto minúsculo, exatamente como na [seção 5](#5-enums). Qualquer outro valor é rejeitado. |
+| Listagens paginadas | Parâmetros `pagina` (a partir de 1, padrão 1) e `por_pagina` (1–100, padrão 20). Resposta: `{"itens": [...], "total": 42, "pagina": 1, "por_pagina": 20, "total_paginas": 3}`. Uma página além da última devolve `itens: []`, não erro. |
 | Campos opcionais | Podem ser omitidos ou enviados como `null`. Na resposta, o campo sempre aparece (com `null` quando vazio). |
 | Campos desconhecidos | Nos corpos de criação, campos fora do contrato são **rejeitados** (422), o que evita erros de digitação silenciosos. |
 | Espaços | O backend remove espaços no início e no fim dos textos. Um texto só de espaços conta como vazio. |
@@ -292,6 +293,58 @@ Requer token do dono da quadra ou de um administrador. Responde **`204`** sem co
 
 Erros: `401`, `403 ACESSO_NEGADO`, `404 QUADRA_NAO_ENCONTRADA`, `404 FOTO_NAO_ENCONTRADA`.
 
+### 6.8 `GET /quadras` ✅ — Buscar quadras
+
+Público (sem token). Lista as quadras **ativas de donos ativos**, ordenadas por `nome`, paginadas. Atende a barra de busca da página inicial e a tela `/quadras` (tarefas 45 e 56 do front-end).
+
+Parâmetros de consulta (todos opcionais):
+
+| Parâmetro | Tipo | Regras | Exemplo |
+|---|---|---|---|
+| `cidade` | texto | até 100. Casa **por palavras**: cada palavra precisa aparecer no nome da cidade, em qualquer ordem. Não diferencia maiúsculas e **ignora acentos** (`joao monlevade` encontra "João Monlevade"). Espaços extras são ignorados. | `monlevade` |
+| `tipo_piso` | enum `tipo_piso` | ver seção 5; omitir = qualquer tipo | `saibro` |
+| `coberta` | boolean | `true` / `false`; omitir = todas | `true` |
+| `pagina` | inteiro | ≥ 1, padrão 1 | `1` |
+| `por_pagina` | inteiro | 1–100, padrão 20 | `20` |
+
+Exemplo: `GET /quadras?cidade=monlevade&tipo_piso=saibro`
+
+```json
+200 {
+  "itens": [
+    {
+      "id": 1, "nome": "Quadra Central", "tipo_piso": "saibro", "coberta": true,
+      "limite_jogadores": 4, "preco_hora": 80.0, "bairro": "Centro",
+      "cidade": "João Monlevade", "estado": "MG", "ativa": true,
+      "foto_principal": "/uploads/quadras/1/abc.jpg"
+    }
+  ],
+  "total": 1, "pagina": 1, "por_pagina": 20, "total_paginas": 1
+}
+```
+`foto_principal` é `null` quando a quadra não tem fotos. Para exibir, use `http://localhost:8000` + o valor. A lista **não** traz a descrição, o endereço completo nem todas as fotos: busque o detalhe (6.9) ao abrir a quadra.
+
+Erros: `422 VALIDACAO` (ex.: `tipo_piso` fora do enum, `por_pagina` acima de 100).
+
+> Enquanto a pendência **P01** não for resolvida, o enum `TipoSuperficie` do Flutter (`dura`, `gramaSintetica`, `carpete`) gera `422` no filtro `tipo_piso`. Use os valores da seção 5.
+
+### 6.9 `GET /quadras/{quadra_id}` ✅ — Detalhes da quadra
+
+Público. Devolve a quadra completa no mesmo formato do `201` de `POST /quadras` (6.5): descrição, endereço, `cep`, `dono_id`, `ativa`, datas e **todas as fotos** (`fotos[]`, ordenadas por `ordem`, com a `principal` marcada).
+
+- Quadra **inativa** ou de dono desativado responde `404` para quem não está logado e para outros donos. O **próprio dono** e o **administrador** a veem normalmente se enviarem o token.
+- O token é opcional, mas, se for enviado e estiver inválido ou expirado, a resposta é `401 NAO_AUTENTICADO`, não a versão pública. Ao receber `401`, descarte o token e repita sem ele (ou mande para o login).
+
+Erros: `404 QUADRA_NAO_ENCONTRADA`, `401 NAO_AUTENTICADO` (token inválido), `422 VALIDACAO` (`quadra_id` não numérico).
+
+> Disponibilidade de horários (tarefa 52) e nota média das avaliações (tarefa 25) entram em endpoints próprios; ver a seção 8.
+
+### 6.10 `GET /quadras/minhas` ✅ — Quadras do dono autenticado
+
+Requer token de **dono de quadra** (administrador recebe `403 ACESSO_NEGADO`). Mesmos parâmetros e mesmo formato de resposta de `GET /quadras` (6.8), mas lista **só as quadras do dono, inclusive as inativas** (veja `ativa` em cada item). Use na área do dono para listar as quadras e abrir o detalhe ou o envio de fotos (tarefa 35 do front-end).
+
+Erros: `401`, `403 ACESSO_NEGADO`, `422 VALIDACAO`.
+
 ## 7. Fluxos das telas
 
 ### 7.1 Cadastro de quadra (tarefas 32 e 51 do front-end)
@@ -350,13 +403,40 @@ Validações recomendadas também na interface: e-mail com `TextInputType.emailA
 | Senha | `TextFormField`, `obscureText`, mín. 8 | `senha` |
 | Confirmar senha | `TextFormField`, `obscureText` | *(só na tela, não é enviado)* |
 
+### 7.5 Busca e detalhes de quadras (página inicial → `/quadras`, tarefas 45 e 56)
+
+```
+[Barra de busca: cidade + superfície] → "BUSCAR QUADRAS"
+    → GET /quadras?cidade=<texto>&tipo_piso=<valor ou omitir>
+        ├─ 422 VALIDACAO → valor de filtro inválido (ver P01)
+        └─ 200 → navegar para /quadras com a página de resultados
+              ├─ itens vazio → "Nenhuma quadra encontrada."
+              ├─ pagina < total_paginas → botão "carregar mais" (pagina + 1)
+              └─ tocar num card → GET /quadras/{id} → tela de detalhes (fotos, descrição, endereço, preço)
+```
+
+Hoje a barra de busca filtra uma lista fixa no próprio Flutter, normalizando acentos com `normalizarCidade`. Com a API, **envie o texto digitado como está**: a busca por palavras, sem diferenciar maiúsculas nem acentos, já é feita no backend. "Qualquer tipo" no seletor de superfície = **não enviar** `tipo_piso`.
+
+### 7.6 Mapeamento de campos — card de resultado e detalhes
+
+| Elemento na tela (sugestão) | Campo da API |
+|---|---|
+| Imagem do card | `foto_principal` (lista) ou `fotos[]` (detalhe); `null` → imagem padrão |
+| Nome | `nome` |
+| Superfície | `tipo_piso` → rótulo da seção 5 |
+| Coberta / descoberta | `coberta` |
+| Preço (R$/hora) | `preco_hora` (número) |
+| Capacidade | `limite_jogadores` |
+| Localização no card | `bairro`, `cidade` - `estado` |
+| Endereço completo (detalhe) | `endereco`, `numero`, `bairro`, `cidade`, `estado`, `cep` |
+| Descrição (detalhe) | `descricao` |
+
 ## 8. Endpoints planejados
 
 Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este documento será atualizado quando cada um for implementado.
 
 | Tarefa (EAP) | Funcionalidade | Endpoint previsto |
 |---|---|---|
-| 13 | Consulta dos dados da quadra | `GET /quadras`, `GET /quadras/{id}` |
 | 20 | Gerenciamento de datas/horários | `POST/PUT/DELETE /quadras/{id}/horarios` |
 | 52 | Consulta de disponibilidade | `GET /quadras/{id}/horarios` |
 | 14 | Criação da reserva (cliente sem login) | `POST /reservas` |
@@ -370,6 +450,7 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.4.0 | 25/11/2026 | Consulta de quadras (tarefa 13): `GET /quadras` (busca pública por cidade, tipo de piso e coberta, paginada), `GET /quadras/{id}` (detalhe público; inativa só para o dono e o administrador) e `GET /quadras/minhas` (quadras do dono). Convenção de listagens paginadas. Fluxo e mapeamento da busca (7.5 e 7.6). |
 | 0.3.0 | 24/11/2026 | Cadastro público de dono de quadra (`POST /auth/registro`, pendência P03), com o erro `409 EMAIL_JA_CADASTRADO`. Seções 6.4 a 6.6 renumeradas para 6.5 a 6.7. Fluxo e mapeamento da tela `/cadastro-login` (7.3 e 7.4). |
 | 0.2.0 | 23/11/2026 | Cadastro de quadras (`POST /quadras`) e envio/remoção de fotos (tarefa 12). Padronização dos erros de validação (`code = VALIDACAO` com `erros[]` em português). Datas passam a sair em UTC com `Z`; valores monetários como número. |
 | 0.1.0 | 22/11/2026 | Primeira versão: `GET /health`, `POST /auth/login`, `GET /auth/me`, formato de erro `{detail, code}`. |

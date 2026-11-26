@@ -47,7 +47,7 @@
 | ID | Tarefa | Início | Fim | Dependências | Status backend |
 |---|---|---|---|---|---|
 | 12 | Implementar cadastro de quadras, incluindo validação dos campos obrigatórios, envio e validação de fotos e limite da descrição | 03/11 | 03/11 | 47 | ✅ `POST /quadras`, fotos |
-| 13 | Implementar consulta dos dados da quadra | 03/11 | 04/11 | 47 | ⬜ |
+| 13 | Implementar consulta dos dados da quadra | 03/11 | 04/11 | 47 | ✅ `GET /quadras`, `GET /quadras/{id}`, `GET /quadras/minhas` |
 | 20 | Implementar gerenciamento da disponibilidade de datas e horários | 05/11 | 05/11 | 13 | ⬜ |
 | 52 | Implementar consulta de disponibilidade e validação de conflitos de horário | 06/11 | 06/11 | 20 | ⬜ |
 | 14 | Implementar criação da reserva e validação do limite de jogadores | 09/11 | 10/11 | 52 | ⬜ |

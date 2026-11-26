@@ -82,6 +82,7 @@ Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/i
 7. **Fotos (CT09):** `POST /api/v1/quadras/{quadra_id}/fotos` com o `id` da quadra. Em `fotos`, use *Add string item* para anexar vários arquivos e misture uma imagem (JPEG/PNG/WebP) com um PDF ou TXT. Esperado: `201`, a imagem em `fotos` e o outro arquivo em `rejeitadas`, com o motivo. Abra `http://localhost:8000` + a `url` devolvida para ver a imagem. Só arquivos inválidos dão `422 FOTOS_REJEITADAS`.
 8. **Permissões:** faça login como administrador (Authorize → *Logout* → login de novo) e tente `POST /quadras`: `403`. Sem login: `401`.
 9. **Remover foto:** `DELETE /api/v1/quadras/{quadra_id}/fotos/{foto_id}` → `204`. Se era a principal, a próxima foto vira a principal (confira no banco).
+10. **Consultar quadras (tarefa 13):** sem login (Authorize → *Logout*), `GET /api/v1/quadras` com `cidade = joao monlevade` (sem acento) e `tipo_piso = saibro`: a quadra cadastrada aparece. `GET /api/v1/quadras/{quadra_id}` traz o detalhe com as fotos. Logado como dono, `GET /api/v1/quadras/minhas` lista as quadras dele, inclusive as inativas.
 
 ## Acessar o banco (DBeaver ou outro cliente)
 
@@ -134,6 +135,7 @@ Fluxo de uma requisição: **rota** (valida com schema) → **service** (regras,
 - **Autorização:** `UsuarioAtual`, `AdminAtual`, `DonoQuadraAtual` ou `Depends(exigir_papel(...))` em `app/api/deps.py`. Usuário inativo perde acesso na hora, mesmo com token válido (CT17).
 - **Datas:** tudo em **UTC** no banco (`app.db.base.utcnow`); nas respostas use `DataHoraUTC` (sai com `Z`) e, para dinheiro, `Dinheiro` (sai como número) — `app/schemas/common.py`.
 - **Clientes não fazem login:** são gravados em `usuarios` sem senha a partir dos dados da reserva (decisão D1).
+- **Busca por texto:** usa `ILIKE` com curingas escapados. Ignorar acentos depende da collation `utf8mb4_0900_ai_ci` do MySQL: no SQLite dos testes, só maiúsculas são ignoradas (os testes de acento rodam só no MySQL).
 - **Erros de banco no MySQL:** violação de `CHECK` chega como `OperationalError` (código 3819), não `IntegrityError`; violação de `UNIQUE`/FK chega como `IntegrityError`.
 
 ## Migrações
