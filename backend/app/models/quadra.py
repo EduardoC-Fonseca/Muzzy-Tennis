@@ -54,5 +54,12 @@ class Quadra(TimestampMixin, Base):
     reservas: Mapped[list[Reserva]] = relationship(back_populates="quadra")
     avaliacoes: Mapped[list[Avaliacao]] = relationship(back_populates="quadra")
 
+    @property
+    def foto_principal_url(self) -> str | None:
+        """URL da foto principal (ou da primeira, por segurança). Exige ``fotos`` carregado."""
+        principal = next((f for f in self.fotos if f.principal), None)
+        foto = principal or (self.fotos[0] if self.fotos else None)
+        return foto.url if foto else None
+
     def __repr__(self) -> str:
         return f"<Quadra id={self.id} nome={self.nome!r}>"

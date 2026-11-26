@@ -1,14 +1,14 @@
-"""Cadastro de quadras e de suas fotos (tarefa 12 — HU03, CT07–CT10)."""
+"""Cadastro de quadras e fotos (tarefa 12 — HU03, CT07–CT10) e consulta (tarefa 13)."""
 
 import uuid
 from dataclasses import dataclass
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.core.exceptions import AcessoNegadoError, NaoEncontradoError, RegraNegocioError
-from app.models import FotoQuadra, PapelUsuario, Quadra, Usuario
+from app.models import FotoQuadra, PapelUsuario, Quadra, TipoPiso, Usuario
 from app.schemas.quadra import FotoRejeitada, QuadraCriar
 from app.services import armazenamento
 
@@ -163,3 +163,67 @@ def remover_foto(db: Session, quadra: Quadra, foto_id: int) -> None:
             proxima.principal = True
     db.commit()
     armazenamento.remover(url)
+
+
+# --- Consulta (tarefa 13) ----------------------------------------------------------------
+
+
+def _escapar_like(texto: str) -> str:
+    return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _visivel_ao_publico():
+    """Quadra ativa de dono ativo: o que clientes (sem login) podem ver."""
+    return and_(Quadra.ativa.is_(True), Usuario.status.is_(True))
+
+
+def listar_quadras(
+    db: Session,
+    *,
+    pagina: int,
+    por_pagina: int,
+    cidade: str | None = None,
+    tipo_piso: TipoPiso | None = None,
+    coberta: bool | None = None,
+    dono_id: int | None = None,
+) -> tuple[list[Quadra], int]:
+    """Busca paginada, ordenada por nome.
+
+    Sem ``dono_id``: só quadras visíveis ao público. Com ``dono_id``: todas as quadras do dono,
+    inclusive inativas. ``cidade`` casa por palavras (todas precisam aparecer), sem diferenciar
+    maiúsculas; no MySQL também ignora acentos (collation ``utf8mb4_0900_ai_ci``).
+    """
+    filtros = []
+    if dono_id is None:
+        filtros.append(_visivel_ao_publico())
+    else:
+        filtros.append(Quadra.dono_id == dono_id)
+    for palavra in (cidade or "").split():
+        filtros.append(Quadra.cidade.ilike(f"%{_escapar_like(palavra)}%", escape="\\"))
+    if tipo_piso is not None:
+        filtros.append(Quadra.tipo_piso == tipo_piso)
+    if coberta is not None:
+        filtros.append(Quadra.coberta.is_(coberta))
+
+    base = select(Quadra).join(Quadra.dono).where(*filtros)
+    total = db.scalar(select(func.count()).select_from(base.subquery())) or 0
+    quadras = db.scalars(
+        base.options(selectinload(Quadra.fotos))
+        .order_by(Quadra.nome, Quadra.id)
+        .limit(por_pagina)
+        .offset((pagina - 1) * por_pagina)
+    ).all()
+    return list(quadras), total
+
+
+def obter_quadra_visivel(db: Session, quadra_id: int, usuario: Usuario | None) -> Quadra:
+    """Detalhe da quadra. Inativa (ou de dono inativo) só aparece para o dono e o administrador;
+    para os demais responde 404, como se não existisse."""
+    quadra = obter_quadra(db, quadra_id)
+    visivel = quadra.ativa and quadra.dono.ativo
+    pode_gerenciar = usuario is not None and (
+        usuario.papel == PapelUsuario.ADMINISTRADOR or usuario.id == quadra.dono_id
+    )
+    if not (visivel or pode_gerenciar):
+        raise NaoEncontradoError("Quadra não encontrada.", code="QUADRA_NAO_ENCONTRADA")
+    return quadra

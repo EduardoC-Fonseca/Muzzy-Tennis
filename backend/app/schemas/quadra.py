@@ -91,6 +91,24 @@ class QuadraPublica(BaseModel):
     atualizado_em: DataHoraUTC
 
 
+class QuadraResumo(BaseModel):
+    """Item das listagens (cards de resultado da busca)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    tipo_piso: TipoPiso
+    coberta: bool
+    limite_jogadores: int
+    preco_hora: Dinheiro
+    bairro: str
+    cidade: str
+    estado: str
+    ativa: bool
+    foto_principal: str | None = Field(validation_alias="foto_principal_url")
+
+
 class FotoRejeitada(BaseModel):
     nome_arquivo: str
     code: str

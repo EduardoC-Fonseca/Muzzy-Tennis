@@ -19,6 +19,13 @@ def get_usuario_atual(db: DbSession, request: Request, token: Annotated[str | No
     if not token:
         raise NaoAutenticadoError("Usuário não autenticado.")
 
+
+oauth2_opcional = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.api_prefix}/auth/login", auto_error=False
+)
+
+
+def _usuario_do_token(db: Session, token: str) -> Usuario:
     try:
         payload = decodificar_token(token)
         usuario_id = int(payload["sub"])
@@ -41,7 +48,20 @@ def get_usuario_atual(db: DbSession, request: Request, token: Annotated[str | No
     return usuario
 
 
+def get_usuario_atual(db: DbSession, token: Annotated[str, Depends(oauth2_scheme)]) -> Usuario:
+    return _usuario_do_token(db, token)
+
+
+def get_usuario_opcional(
+    db: DbSession, token: Annotated[str | None, Depends(oauth2_opcional)]
+) -> Usuario | None:
+    """Rotas públicas que mostram mais dados a quem está logado. Sem token: ``None``.
+    Um token enviado, mas inválido, continua dando 401 (não é ignorado em silêncio)."""
+    return _usuario_do_token(db, token) if token else None
+
+
 UsuarioAtual = Annotated[Usuario, Depends(get_usuario_atual)]
+UsuarioOpcional = Annotated[Usuario | None, Depends(get_usuario_opcional)]
 
 
 def exigir_papel(*papeis: PapelUsuario) -> Callable[[Usuario], Usuario]:
