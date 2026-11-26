@@ -43,8 +43,8 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final token = await _authService.login(email: email, senha: senha);
-      await _authService.obterUsuario(token);
+      await _authService.login(email: email, senha: senha);
+      await _authService.obterUsuario();
 
       if (!mounted) return;
         AppSnackBar.sucesso(context, 'Login realizado com sucesso!');
