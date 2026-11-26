@@ -19,7 +19,7 @@
 | Maria Clara | Gerente de Projeto | Plano, histórias, cronograma, requisitos, cenários de teste, protótipo |
 | Eduardo | Desenvolvedor Front-end | Front-end, orçamento, benchmarking |
 | Hálisson | Desenvolvedor Back-end | Backend, Banco de dados |
-| Davi | Desenvolvedor Front-end | Front-end, protótipo |
+| Davi | Desenvolvedor Front-end | Front-end, Infra, protótipo |
 
 ## Planejamento
 
