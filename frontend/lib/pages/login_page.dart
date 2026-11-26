@@ -1,9 +1,10 @@
-
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:muzzi_tennis/core/app_theme.dart';
 import 'package:muzzi_tennis/widgets/app_navbar.dart';
+import 'package:muzzi_tennis/widgets/campo_email.dart';
+import 'package:muzzi_tennis/widgets/campo_senha.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,7 +14,15 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  bool senhaVisivel = false;
+  final _emailController = TextEditingController();
+  final _senhaController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Column(
         children: [
           const AppNavebar(),
+
           Expanded(
             child: Center(
               child: SingleChildScrollView(
@@ -46,6 +56,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       child: Row(
                         children: [
+                          // LADO ESQUERDO - Identidade visual
                           SizedBox(
                             width: 280,
                             child: Column(
@@ -70,8 +81,7 @@ class _LoginPageState extends State<LoginPage> {
                                       TextSpan(
                                         text: 'TENNIS',
                                         style: TextStyle(
-                                          color:
-                                              AppTheme.verdeMuzziTennis,
+                                          color: AppTheme.verdeMuzziTennis,
                                         ),
                                       ),
                                     ],
@@ -97,8 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                           Expanded(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.stretch,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Text(
                                   'BEM-VINDO DE VOLTA',
@@ -121,55 +130,28 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
 
                                 const SizedBox(height: 32),
-                                TextFormField(
-                                  keyboardType:
-                                      TextInputType.emailAddress,
-                                  decoration: InputDecoration(
-                                    labelText: 'E-mail',
-                                    hintText: 'Digite seu e-mail',
-                                    prefixIcon:
-                                        Icon(Icons.email_outlined),
-                                    border: OutlineInputBorder(),
-                                  ),
+
+                                CampoEmail(
+                                  controller: _emailController,
                                 ),
 
                                 const SizedBox(height: 20),
-                                TextFormField(
-                                  obscureText: !senhaVisivel,
-                                  decoration: InputDecoration(
-                                    labelText: 'Senha',
-                                    hintText: 'Digite sua senha',
-                                    prefixIcon:
-                                        const Icon(Icons.lock_outline),
-                                    border: const OutlineInputBorder(),
-                                    suffixIcon: IconButton(
-                                      tooltip: senhaVisivel ? 'Ocultar senha' : 'Mostrar senha',
-                                      icon: Icon(
-                                        senhaVisivel ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          senhaVisivel = !senhaVisivel;
-                                        });
-                                      },
-                                    ),
-                                  ),
+
+                                CampoSenha(
+                                  controller: _senhaController,
                                 ),
 
                                 const SizedBox(height: 24),
+
                                 SizedBox(
                                   height: 52,
                                   child: ElevatedButton.icon(
                                     onPressed: () {
-                                      debugPrint(
-                                        'Botão de login pressionado',
-                                      );
+                                      debugPrint('Botão de login pressionado',);
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          AppTheme.verdeMuzziTennis,
-                                      foregroundColor:
-                                          AppTheme.fundoPreto,
+                                      backgroundColor: AppTheme.verdeMuzziTennis,
+                                      foregroundColor: AppTheme.fundoPreto,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
@@ -210,23 +192,18 @@ class _LoginPageState extends State<LoginPage> {
                                         );
                                       },
                                       style: TextButton.styleFrom(
-                                        foregroundColor:
-                                            AppTheme.verdeMuzziTennis,
+                                        foregroundColor: AppTheme.verdeMuzziTennis,
                                         padding: EdgeInsets.zero,
                                         minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize
-                                                .shrinkWrap,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                       ),
                                       child: Text(
                                         'Cadastre-se aqui',
                                         style: GoogleFonts.barlow(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
-                                          decoration:
-                                              TextDecoration.underline,
-                                          decorationColor:
-                                              AppTheme.verdeMuzziTennis,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: AppTheme.verdeMuzziTennis,
                                         ),
                                       ),
                                     ),
