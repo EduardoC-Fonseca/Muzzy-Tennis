@@ -7,6 +7,8 @@ class AppTheme {
   static const Color textoBranco = Color(0xFFF0F1F3);
   static const Color textoCinza = Color(0xFF8A9099);
   static const Color bordaPreta = Color(0xFF2F3134);
+  static const Color vermelhoErro = Color.fromARGB(255, 179, 9, 9);
+  static const Color amareloAviso = Color.fromARGB(255, 235, 220, 11);
 
   static ThemeData get muzziTennisTheme {
     return ThemeData.dark().copyWith(
