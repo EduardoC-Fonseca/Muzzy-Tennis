@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.5.0 · **Última atualização:** 27/11/2026
+**Versão do contrato:** 0.6.0 · **Última atualização:** 27/11/2026
 
 ---
 
@@ -31,7 +31,8 @@ Recomendação: centralizar a URL base num único lugar do app (ex.: `const apiB
 | Formato | JSON UTF-8 (`Content-Type: application/json`), exceto o login (form-urlencoded) e o envio de fotos (multipart). |
 | Nomes de campos | `snake_case`, iguais ao [modelo de dados](db/modelo_dados.md). |
 | IDs | Inteiros. |
-| Datas e horas | ISO 8601 em **UTC** com sufixo `Z` (ex.: `2026-11-23T23:03:57.621568Z`). Converta para o horário local na exibição (`DateTime.parse(s).toLocal()`). |
+| Datas e horas (registros) | Momentos como `criado_em` vêm em ISO 8601 **UTC** com sufixo `Z` (ex.: `2026-11-23T23:03:57.621568Z`). Converta para o horário local na exibição (`DateTime.parse(s).toLocal()`). |
+| Datas e horas dos horários de quadra | `data` em `AAAA-MM-DD` e `hora_inicio`/`hora_fim` em `HH:MM`, **sem fuso**: já são o horário local da quadra (`America/Sao_Paulo`). **Não converta**. Na entrada, a hora aceita `HH:MM` ou `HH:MM:SS` (os segundos são descartados). |
 | Valores monetários | Na resposta, sempre **número** (ex.: `95.5`). Na requisição, aceita número ou texto (`80`, `"80.00"`), com no máximo 2 casas decimais. |
 | Enums | Texto minúsculo, exatamente como na [seção 5](#5-enums). Qualquer outro valor é rejeitado. |
 | Listagens paginadas | Parâmetros `pagina` (a partir de 1, padrão 1) e `por_pagina` (1–100, padrão 20). Resposta: `{"itens": [...], "total": 42, "pagina": 1, "por_pagina": 20, "total_paginas": 3}`. Uma página além da última devolve `itens: []`, não erro. |
@@ -102,6 +103,13 @@ Sugestão: converter `erros` num `Map<String, String>` e usar como `errorText` d
 | 404 | `NAO_ENCONTRADO` | Recurso genérico ou endereço inexistente | — |
 | 405 | `METODO_NAO_PERMITIDO` | Método HTTP errado para o endereço (ex.: `PUT` onde só há `GET`) | Erro de programação: revisar a chamada |
 | 404 | `QUADRA_NAO_ENCONTRADA` | Quadra inexistente | — |
+| 404 | `HORARIO_NAO_ENCONTRADO` | Horário inexistente ou de outra quadra | — |
+| 409 | `HORARIO_RESERVADO` | Tentativa de alterar ou remover um horário reservado (CT12) | Explicar que horários reservados são preservados |
+| 409 | `HORARIO_PASSADO` | Tentativa de alterar ou remover um horário que já começou | Esconder as ações de horários passados |
+| 409 | `HORARIO_COM_HISTORICO` | Remover um horário que já teve reservas (canceladas ou expiradas) | Sugerir bloquear o horário |
+| 409 | `HORARIO_JA_CADASTRADO` | Geração simultânea criou o mesmo horário (raro) | Repetir a operação |
+| 422 | `PERIODO_SEM_DATAS` | Nenhuma data do período cai nos dias da semana escolhidos | Mensagem no formulário |
+| 422 | `PERIODO_INVALIDO` | Na listagem, `data_fim` antes de `data_inicio` ou período acima de 92 dias | Ajustar o filtro |
 | 404 | `FOTO_NAO_ENCONTRADA` | Foto inexistente ou de outra quadra | — |
 | 409 | `EMAIL_JA_CADASTRADO` | Cadastro de dono com e-mail já usado por outra conta (ver 6.4) | Erro no campo e-mail, com link para o login |
 | 422 | `VALIDACAO` | Campos inválidos ou ausentes (ver 4.1) | Erro em cada campo |
@@ -113,7 +121,7 @@ Sugestão: converter `erros` num `Map<String, String>` e usar como `errorText` d
 |---|---|---|
 | `papel_usuario` | `cliente`, `dono_quadra`, `administrador` | Cliente, Dono de quadra, Administrador |
 | `tipo_piso` | `saibro`, `rapida`, `grama`, `sintetico` | Saibro, Rápida, Grama, Sintética |
-| `status_horario` | `disponivel`, `reservado`, `bloqueado` | *(próximas tarefas)* |
+| `status_horario` | `disponivel`, `reservado`, `bloqueado` | Disponível, Reservado, Bloqueado |
 | `status_reserva` | `aguardando_pagamento`, `confirmada`, `cancelada`, `expirada`, `concluida` | *(próximas tarefas)* |
 | `status_pagamento` | `pendente`, `pago`, `falhou`, `estornado`, `estornado_parcialmente` | *(próximas tarefas)* |
 | `metodo_pagamento` | `pix`, `cartao_credito`, `cartao_debito` | *(próximas tarefas)* |
@@ -346,6 +354,91 @@ Requer token de **dono de quadra** (administrador recebe `403 ACESSO_NEGADO`). M
 
 Erros: `401`, `403 ACESSO_NEGADO`, `422 VALIDACAO`.
 
+### 6.11 Horários da quadra ✅ — gerenciamento pelo dono (tarefa 20)
+
+Cada horário é um intervalo de **1 hora** (`DURACAO_SLOT_MINUTOS`) numa data, com status `disponivel`, `reservado` ou `bloqueado`. Todas as rotas abaixo exigem token do **dono da quadra** ou de um **administrador**: outro dono recebe `403 ACESSO_NEGADO`, e quadra inexistente dá `404 QUADRA_NAO_ENCONTRADA`. A consulta pública da disponibilidade, para o cliente, é a tarefa 52 (seção 8).
+
+Objeto **`HorarioPublico`**:
+
+```json
+{
+  "id": 10, "quadra_id": 1, "data": "2026-12-07", "hora_inicio": "08:00", "hora_fim": "09:00",
+  "preco": null, "preco_efetivo": 80.0, "status": "disponivel"
+}
+```
+`preco` é o preço próprio do horário. Quando é `null`, vale o preço da quadra. **`preco_efetivo`** é o que o cliente paga; exiba sempre esse campo.
+
+#### 6.11.1 `POST /quadras/{quadra_id}/horarios` — Gerar horários em lote
+
+Para cada data do período cujo dia da semana esteja em `dias_semana`, cria horários consecutivos de 1 hora, da abertura até o fechamento. Uma sobra menor que 1 hora é descartada: por exemplo, de 08:00 a 10:45 são criados 08:00 e 09:00. Para criar **um único horário**, use a mesma data no início e no fim e um intervalo de 1 hora.
+
+| Campo | Tipo | Obrigatório | Regras | Exemplo |
+|---|---|---|---|---|
+| `data_inicio` | data | sim | `AAAA-MM-DD`, hoje ou depois | `"2026-12-07"` |
+| `data_fim` | data | sim | ≥ `data_inicio`; período de até **92 dias** | `"2026-12-31"` |
+| `dias_semana` | lista de inteiros | não (padrão: todos) | **1 = segunda … 7 = domingo**, igual ao `DateTime.weekday` do Dart; repetições são ignoradas | `[1, 2, 3, 4, 5]` |
+| `hora_abertura` | hora | sim | `HH:MM` | `"08:00"` |
+| `hora_fechamento` | hora | sim | `HH:MM`, pelo menos 1 hora depois da abertura (no mesmo dia) | `"22:00"` |
+| `preco` | número | não | > 0, até 2 casas. Omitir = usa o preço da quadra | `100` |
+
+```json
+201 {
+  "criados": [ HorarioPublico, ... ],
+  "ignorados": [
+    { "data": "2026-12-07", "hora_inicio": "10:00", "hora_fim": "11:00",
+      "code": "HORARIO_JA_CADASTRADO", "motivo": "Já existe um horário com este início." }
+  ]
+}
+```
+Horários que não podem ser criados **não impedem os outros**. Eles voltam em `ignorados`, com um destes `code`:
+
+| `code` | Motivo |
+|---|---|
+| `HORARIO_JA_CADASTRADO` | Já existe um horário com este início. |
+| `HORARIO_SOBREPOSTO` | Sobrepõe o horário HH:MM–HH:MM (ex.: já existe 10:30–11:30). |
+| `HORARIO_PASSADO` | O horário já passou (só ocorre para a data de hoje). |
+
+Por isso a geração pode ser **repetida sem duplicar** nada. `criados` pode até vir vazio, se tudo já existia.
+
+Erros:
+- `422 VALIDACAO`: data no passado, período invertido ou maior que 92 dias, fechamento menos de 1 hora depois da abertura, dia da semana fora de 1–7 ou preço ≤ 0.
+- `422 PERIODO_SEM_DATAS`: o período não contém nenhum dos dias escolhidos.
+
+#### 6.11.2 `GET /quadras/{quadra_id}/horarios` — Listar horários (visão do dono)
+
+Parâmetros: `data_inicio` (padrão: hoje), `data_fim` (padrão: `data_inicio` + 6 dias; período de até 92 dias) e `status` (opcional). Devolve uma **lista** de `HorarioPublico` com todos os status, ordenada por data e hora. Não é paginada, porque o período já limita o tamanho.
+
+Erros: `422 PERIODO_INVALIDO`, `422 VALIDACAO` (data ou status mal formatados).
+
+> Nesta versão, a rota exige o token do dono ou do administrador. Na tarefa 52 ela passa a aceitar o cliente sem login, para mostrar a disponibilidade.
+
+#### 6.11.3 `PATCH /quadras/{quadra_id}/horarios/{horario_id}` — Bloquear, desbloquear ou mudar o preço
+
+Envie **só o que muda**:
+
+| Campo | Tipo | Regras |
+|---|---|---|
+| `status` | enum `StatusHorarioAlteravel` | `disponivel` ou `bloqueado`. `reservado` é definido só pelas reservas. Omitir mantém o status; `null` é rejeitado |
+| `preco` | número ou `null` | > 0; `null` volta a usar o preço da quadra |
+
+Resposta `200` com o `HorarioPublico` atualizado.
+
+Erros:
+- `409 HORARIO_RESERVADO`: horários reservados são preservados (CT12).
+- `409 HORARIO_PASSADO`.
+- `404 HORARIO_NAO_ENCONTRADO`.
+- `422 VALIDACAO`: corpo vazio, `status` inválido ou campo desconhecido.
+
+#### 6.11.4 `DELETE /quadras/{quadra_id}/horarios/{horario_id}` — Remover horário
+
+Remove um horário **livre e futuro**. Responde `204`.
+
+Erros:
+- `409 HORARIO_RESERVADO`.
+- `409 HORARIO_PASSADO`.
+- `409 HORARIO_COM_HISTORICO`: o horário já teve reservas, canceladas ou expiradas, e o histórico precisa ser mantido. Nesse caso, **bloqueie** o horário com o PATCH.
+- `404 HORARIO_NAO_ENCONTRADO`.
+
 ## 7. Fluxos das telas
 
 ### 7.1 Cadastro de quadra (tarefas 32 e 51 do front-end)
@@ -432,14 +525,42 @@ Hoje a barra de busca filtra uma lista fixa no próprio Flutter, normalizando ac
 | Endereço completo (detalhe) | `endereco`, `numero`, `bairro`, `cidade`, `estado`, `cep` |
 | Descrição (detalhe) | `descricao` |
 
+### 7.7 Gerenciamento de horários (área do dono)
+
+```
+[Minhas quadras] → escolher quadra → GET /quadras/{id}/horarios?data_inicio=..&data_fim=..
+    → grade (dias × horas) colorida por status
+
+[Gerar horários: período, dias da semana, abertura, fechamento, preço opcional]
+    → POST /quadras/{id}/horarios
+        ├─ 422 → erros nos campos / PERIODO_SEM_DATAS
+        └─ 201 → "N horários criados"; se ignorados[] não estiver vazio: "M ignorados" (listar motivos)
+              → recarregar a grade
+
+[Tocar num horário]
+    ├─ disponivel → ações: Bloquear (PATCH status=bloqueado), Alterar preço (PATCH preco), Remover (DELETE)
+    ├─ bloqueado  → ações: Desbloquear (PATCH status=disponivel), Remover (DELETE)
+    └─ reservado ou passado → sem ações (o backend responde 409)
+         DELETE com 409 HORARIO_COM_HISTORICO → oferecer "Bloquear" no lugar
+```
+
+### 7.8 Mapeamento de campos — formulário de geração de horários
+
+| Campo na tela (sugestão) | Widget sugerido | Campo da API |
+|---|---|---|
+| Período | `showDateRangePicker` (início ≥ hoje, até 92 dias) | `data_inicio`, `data_fim` (`AAAA-MM-DD`) |
+| Dias da semana | `FilterChip` de Seg a Dom | `dias_semana` (`DateTime.monday` = 1 … `DateTime.sunday` = 7) |
+| Abre às | `showTimePicker` | `hora_abertura` (`HH:MM`) |
+| Fecha às | `showTimePicker` | `hora_fechamento` (`HH:MM`) |
+| Preço por hora (opcional) | `TextFormField` monetário; vazio = preço da quadra | `preco` |
+
 ## 8. Endpoints planejados
 
 Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este documento será atualizado quando cada um for implementado.
 
 | Tarefa (EAP) | Funcionalidade | Endpoint previsto |
 |---|---|---|
-| 20 | Gerenciamento de datas/horários | `POST/PUT/DELETE /quadras/{id}/horarios` |
-| 52 | Consulta de disponibilidade | `GET /quadras/{id}/horarios` |
+| 52 | Consulta pública de disponibilidade e validação de conflitos | `GET /quadras/{id}/horarios` aberto ao cliente sem login |
 | 14 | Criação da reserva (cliente sem login) | `POST /reservas` |
 | 15, 53 | Pagamento simulado e expiração | `POST /reservas/{codigo}/pagamento` |
 | 16, 54 | Cancelamento e estorno | `POST /reservas/{codigo}/cancelamento` |
@@ -451,6 +572,7 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.6.0 | 27/11/2026 | Gerenciamento de horários (tarefa 20): `POST`, `GET`, `PATCH` e `DELETE` em `/quadras/{id}/horarios` (seção 6.11), com geração em lote, horários ignorados com motivo e preservação dos reservados (CT12); no `PATCH`, `status` é o enum `StatusHorarioAlteravel`. Convenção de data e hora dos horários (local, `HH:MM`). Novos códigos de erro `HORARIO_*`, `PERIODO_SEM_DATAS` e `PERIODO_INVALIDO`. Fluxo e mapeamento da tela de horários (7.7 e 7.8). |
 | 0.5.0 | 27/11/2026 | **Mudança incompatível:** a URL base passa de `/api/v1` para `/api`, sem versão no caminho (ex.: `POST /api/auth/login`). |
 | 0.4.1 | 26/11/2026 | Correção: requisição sem token agora responde `401` no formato padrão, com `code = NAO_AUTENTICADO` (antes vinha `{"detail": "Not authenticated"}`, sem `code`). Erros do próprio framework (endereço inexistente, método não permitido) também saem com `code`. Novo código `405 METODO_NAO_PERMITIDO`. |
 | 0.4.0 | 25/11/2026 | Consulta de quadras (tarefa 13): `GET /quadras` (busca pública por cidade, tipo de piso e coberta, paginada), `GET /quadras/{id}` (detalhe público; inativa só para o dono e o administrador) e `GET /quadras/minhas` (quadras do dono). Convenção de listagens paginadas. Fluxo e mapeamento da busca (7.5 e 7.6). |

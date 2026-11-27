@@ -83,6 +83,10 @@ Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/i
 8. **Permissões:** faça login como administrador (Authorize → *Logout* → login de novo) e tente `POST /quadras`: `403`. Sem login: `401`.
 9. **Remover foto:** `DELETE /api/quadras/{quadra_id}/fotos/{foto_id}` → `204`. Se era a principal, a próxima foto vira a principal (confira no banco).
 10. **Consultar quadras (tarefa 13):** sem login (Authorize → *Logout*), `GET /api/quadras` com `cidade = joao monlevade` (sem acento) e `tipo_piso = saibro`: a quadra cadastrada aparece. `GET /api/quadras/{quadra_id}` traz o detalhe com as fotos. Logado como dono, `GET /api/quadras/minhas` lista as quadras dele, inclusive as inativas.
+11. **Horários (tarefa 20):** logado como dono, `POST /api/quadras/{quadra_id}/horarios` com `{"data_inicio": "<data futura AAAA-MM-DD>", "data_fim": "<mesma data + 6 dias>", "dias_semana": [1, 3, 5], "hora_abertura": "08:00", "hora_fechamento": "12:00"}`. Esperado: `201`, com os horários em `criados`. Repita o mesmo pedido: nada é duplicado e tudo volta em `ignorados`. Depois:
+    - `GET .../horarios` com o mesmo período lista os horários;
+    - `PATCH .../horarios/{horario_id}` com `{"status": "bloqueado"}` bloqueia um horário;
+    - `DELETE .../horarios/{horario_id}` remove um horário livre.
 
 ## Acessar o banco (DBeaver ou outro cliente)
 
@@ -135,6 +139,7 @@ Fluxo de uma requisição: **rota** (valida com schema) → **service** (regras,
 - **Autorização:** `UsuarioAtual`, `AdminAtual`, `DonoQuadraAtual` ou `Depends(exigir_papel(...))` em `app/api/deps.py`. Usuário inativo perde acesso na hora, mesmo com token válido (CT17).
 - **Datas:** tudo em **UTC** no banco (`app.db.base.utcnow`); nas respostas use `DataHoraUTC` (sai com `Z`) e, para dinheiro, `Dinheiro` (sai como número) — `app/schemas/common.py`.
 - **Clientes não fazem login:** são gravados em `usuarios` sem senha a partir dos dados da reserva (decisão D1).
+- **Horários de quadra:** `data` e `hora_*` são **locais** (`FUSO_HORARIO`, padrão `America/Sao_Paulo`), sem fuso. Para comparar com "agora", use `app.core.tempo.agora_local()`, nunca `utcnow()`. Já os registros (`criado_em`, `expira_em`) ficam em UTC.
 - **Busca por texto:** usa `ILIKE` com curingas escapados. Ignorar acentos depende da collation `utf8mb4_0900_ai_ci` do MySQL: no SQLite dos testes, só maiúsculas são ignoradas (os testes de acento rodam só no MySQL).
 - **Erros de banco no MySQL:** violação de `CHECK` chega como `OperationalError` (código 3819), não `IntegrityError`; violação de `UNIQUE`/FK chega como `IntegrityError`.
 
