@@ -89,6 +89,7 @@ Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/i
     - `GET .../horarios` com o mesmo período lista os horários;
     - `PATCH .../horarios/{horario_id}` com `{"status": "bloqueado"}` bloqueia um horário;
     - `DELETE .../horarios/{horario_id}` remove um horário livre.
+12. **Disponibilidade (tarefa 52):** bloqueie um dos horários (passo 11) e saia do login (`POST /api/auth/logout`, depois Authorize → *Logout*). `GET /api/quadras/{quadra_id}/horarios` mostra só os horários disponíveis, sem o bloqueado. Com `status = bloqueado`: `403`. Logado como dono, a mesma rota mostra todos os status.
 
 ## Acessar o banco (DBeaver ou outro cliente)
 

@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.7.0 · **Última atualização:** 27/11/2026
+**Versão do contrato:** 0.8.0 · **Última atualização:** 27/11/2026
 
 ---
 
@@ -120,7 +120,8 @@ Sugestão: converter `erros` num `Map<String, String>` e usar como `errorText` d
 | 404 | `QUADRA_NAO_ENCONTRADA` | Quadra inexistente | — |
 | 404 | `HORARIO_NAO_ENCONTRADO` | Horário inexistente ou de outra quadra | — |
 | 409 | `HORARIO_RESERVADO` | Tentativa de alterar ou remover um horário reservado (CT12) | Explicar que horários reservados são preservados |
-| 409 | `HORARIO_PASSADO` | Tentativa de alterar ou remover um horário que já começou | Esconder as ações de horários passados |
+| 409 | `HORARIO_PASSADO` | Tentativa de alterar, remover ou reservar um horário que já começou | Esconder as ações de horários passados |
+| 409 | `HORARIO_INDISPONIVEL` | Reserva de um horário que outro cliente reservou ou que o dono bloqueou (CT02; com `POST /reservas`, tarefa 14) | Recarregar a disponibilidade e pedir outro horário |
 | 409 | `HORARIO_COM_HISTORICO` | Remover um horário que já teve reservas (canceladas ou expiradas) | Sugerir bloquear o horário |
 | 409 | `HORARIO_JA_CADASTRADO` | Geração simultânea criou o mesmo horário (raro) | Repetir a operação |
 | 422 | `PERIODO_SEM_DATAS` | Nenhuma data do período cai nos dias da semana escolhidos | Mensagem no formulário |
@@ -375,7 +376,7 @@ Público. Devolve a quadra completa no mesmo formato do `201` de `POST /quadras`
 
 Erros: `404 QUADRA_NAO_ENCONTRADA`, `401 NAO_AUTENTICADO` (token inválido), `422 VALIDACAO` (`quadra_id` não numérico).
 
-> Disponibilidade de horários (tarefa 52) e nota média das avaliações (tarefa 25) entram em endpoints próprios; ver a seção 8.
+> A disponibilidade de horários fica em `GET /quadras/{id}/horarios` (6.11.2). A nota média das avaliações (tarefa 25) terá endpoint próprio; ver a seção 8.
 
 ### 6.10 `GET /quadras/minhas` ✅ — Quadras do dono autenticado
 
@@ -383,9 +384,9 @@ Requer token de **dono de quadra** (administrador recebe `403 ACESSO_NEGADO`). M
 
 Erros: `401`, `403 ACESSO_NEGADO`, `422 VALIDACAO`.
 
-### 6.11 Horários da quadra ✅ — gerenciamento pelo dono (tarefa 20)
+### 6.11 Horários da quadra ✅ — gerenciamento pelo dono (tarefa 20) e disponibilidade (tarefa 52)
 
-Cada horário é um intervalo de **1 hora** (`DURACAO_SLOT_MINUTOS`) numa data, com status `disponivel`, `reservado` ou `bloqueado`. Todas as rotas abaixo exigem token do **dono da quadra** ou de um **administrador**: outro dono recebe `403 ACESSO_NEGADO`, e quadra inexistente dá `404 QUADRA_NAO_ENCONTRADA`. A consulta pública da disponibilidade, para o cliente, é a tarefa 52 (seção 8).
+Cada horário é um intervalo de **1 hora** (`DURACAO_SLOT_MINUTOS`) numa data, com status `disponivel`, `reservado` ou `bloqueado`. A listagem (6.11.2) é **pública** e mostra ao cliente os horários livres. As demais rotas exigem token do **dono da quadra** ou de um **administrador**: outro dono recebe `403 ACESSO_NEGADO`, e quadra inexistente dá `404 QUADRA_NAO_ENCONTRADA`.
 
 Objeto **`HorarioPublico`**:
 
@@ -433,13 +434,24 @@ Erros:
 - `422 VALIDACAO`: data no passado, período invertido ou maior que 92 dias, fechamento menos de 1 hora depois da abertura, dia da semana fora de 1–7 ou preço ≤ 0.
 - `422 PERIODO_SEM_DATAS`: o período não contém nenhum dos dias escolhidos.
 
-#### 6.11.2 `GET /quadras/{quadra_id}/horarios` — Listar horários (visão do dono)
+#### 6.11.2 `GET /quadras/{quadra_id}/horarios` — Disponibilidade (público) ou horários (dono)
 
-Parâmetros: `data_inicio` (padrão: hoje), `data_fim` (padrão: `data_inicio` + 6 dias; período de até 92 dias) e `status` (opcional). Devolve uma **lista** de `HorarioPublico` com todos os status, ordenada por data e hora. Não é paginada, porque o período já limita o tamanho.
+Parâmetros: `data_inicio` (padrão: hoje), `data_fim` (padrão: `data_inicio` + 6 dias; período de até 92 dias) e `status` (opcional). Devolve uma **lista** de `HorarioPublico`, ordenada por data e hora. Não é paginada, porque o período já limita o tamanho.
 
-Erros: `422 PERIODO_INVALIDO`, `422 VALIDACAO` (data ou status mal formatados).
+O conteúdo depende de quem pergunta:
 
-> Nesta versão, a rota exige o token do dono ou do administrador. Na tarefa 52 ela passa a aceitar o cliente sem login, para mostrar a disponibilidade.
+| Quem | O que vem |
+|---|---|
+| **Público**: sem login, ou logado sem ser dono desta quadra | Só horários **`disponivel`** que **ainda não começaram**. É a disponibilidade para o cliente escolher e reservar |
+| **Dono da quadra ou administrador** | Todos os status (`disponivel`, `reservado`, `bloqueado`), inclusive os que já passaram |
+
+- Quadra inativa, ou de dono inativo, dá `404 QUADRA_NAO_ENCONTRADA` para o público. O dono e o administrador continuam vendo os horários dela.
+- O público pode enviar `status=disponivel`. Com `reservado` ou `bloqueado`, a resposta é `403 ACESSO_NEGADO`.
+- Um horário que começa agora (ex.: 14:00 às 14:00) já não aparece para o público.
+
+Erros: `404 QUADRA_NAO_ENCONTRADA`, `403 ACESSO_NEGADO` (público filtrando status internos), `401 NAO_AUTENTICADO` (token enviado, mas inválido), `422 PERIODO_INVALIDO`, `422 VALIDACAO` (data ou status mal formatados).
+
+> **Conflitos na reserva (CT02, RNF01).** A disponibilidade é uma fotografia do momento: entre a consulta e a reserva, outro cliente pode reservar o mesmo horário. A criação da reserva (tarefa 14) revalida e trava o horário no banco. Se ele não estiver mais livre, a resposta será `409 HORARIO_INDISPONIVEL`; se já tiver começado, `409 HORARIO_PASSADO`. Nesses casos, recarregue a disponibilidade e peça outro horário.
 
 #### 6.11.3 `PATCH /quadras/{quadra_id}/horarios/{horario_id}` — Bloquear, desbloquear ou mudar o preço
 
@@ -583,13 +595,23 @@ Hoje a barra de busca filtra uma lista fixa no próprio Flutter, normalizando ac
 | Fecha às | `showTimePicker` | `hora_fechamento` (`HH:MM`) |
 | Preço por hora (opcional) | `TextFormField` monetário; vazio = preço da quadra | `preco` |
 
+### 7.9 Disponibilidade para o cliente (detalhes da quadra → reserva)
+
+```
+[Detalhes da quadra] → GET /quadras/{id}/horarios?data_inicio=..&data_fim=..   (sem login)
+    → agrupar por data (ex.: abas ou calendário dos próximos 7 dias)
+    → cada horário: "HH:MM–HH:MM · R$ preco_efetivo"
+    ├─ lista vazia → "Sem horários disponíveis neste período"
+    └─ tocar num horário → formulário da reserva (tarefa 14) com o id do horário
+           └─ 409 HORARIO_INDISPONIVEL / HORARIO_PASSADO → avisar, recarregar a lista
+```
+
 ## 8. Endpoints planejados
 
 Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este documento será atualizado quando cada um for implementado.
 
 | Tarefa (EAP) | Funcionalidade | Endpoint previsto |
 |---|---|---|
-| 52 | Consulta pública de disponibilidade e validação de conflitos | `GET /quadras/{id}/horarios` aberto ao cliente sem login |
 | 14 | Criação da reserva (cliente sem login) | `POST /reservas` |
 | 15, 53 | Pagamento simulado e expiração | `POST /reservas/{codigo}/pagamento` |
 | 16, 54 | Cancelamento e estorno | `POST /reservas/{codigo}/cancelamento` |
@@ -601,6 +623,7 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.8.0 | 27/11/2026 | Disponibilidade pública (tarefa 52): `GET /quadras/{id}/horarios` passa a aceitar o cliente sem login e mostra só horários disponíveis que ainda não começaram; o dono e o administrador continuam vendo todos (6.11.2). Validação de conflitos para a reserva, com o novo código `409 HORARIO_INDISPONIVEL` (CT02). Fluxo da disponibilidade para o cliente (7.9). |
 | 0.7.0 | 27/11/2026 | Sessão por cookie HttpOnly `muzzi_session` com proteção CSRF (front web), convivendo com o `Authorization: Bearer` (Swagger, testes). O login continua `200` com `access_token` e passa a gravar o cookie e devolver `X-CSRF-Token`. Novas rotas `GET /auth/csrf` e `POST /auth/logout` (6.3.1 e 6.3.2). Novos códigos `403 CSRF_INVALIDO` e `403 ORIGEM_NAO_PERMITIDA`. Front pelo compose da raiz em `localhost:8080`, com `/api/` e `/uploads/` repassados pelo nginx. |
 | 0.6.0 | 27/11/2026 | Gerenciamento de horários (tarefa 20): `POST`, `GET`, `PATCH` e `DELETE` em `/quadras/{id}/horarios` (seção 6.11), com geração em lote, horários ignorados com motivo e preservação dos reservados (CT12); no `PATCH`, `status` é o enum `StatusHorarioAlteravel`. Convenção de data e hora dos horários (local, `HH:MM`). Novos códigos de erro `HORARIO_*`, `PERIODO_SEM_DATAS` e `PERIODO_INVALIDO`. Fluxo e mapeamento da tela de horários (7.7 e 7.8). |
 | 0.5.0 | 27/11/2026 | **Mudança incompatível:** a URL base passa de `/api/v1` para `/api`, sem versão no caminho (ex.: `POST /api/auth/login`). |
