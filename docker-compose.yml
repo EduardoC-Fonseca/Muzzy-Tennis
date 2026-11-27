@@ -7,10 +7,12 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      # Mesmos padrões do backend/.env.example. Para outros valores, rode com
+      # "docker compose --env-file backend/.env up --build".
+      MYSQL_DATABASE: ${DB_NAME:-muzzi_tennis}
+      MYSQL_USER: ${DB_USER:-muzzi}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-muzzi}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       TZ: UTC
     command:
       - --character-set-server=utf8mb4
@@ -35,7 +37,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
-      - ./.env
+      - ./backend/.env
     environment:
       DB_HOST: db
       DB_PORT: "3306"

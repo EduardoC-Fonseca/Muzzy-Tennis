@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class AuthService {
   Future<void> login({required String email, required String senha}) async {
-    final url = Uri.base.resolve('/api/v1/auth/login');
+    final url = Uri.base.resolve('/api/auth/login');
 
     final resposta = await http.post(
       url,
@@ -23,7 +23,8 @@ class AuthService {
     if (resposta.statusCode == 403) {
       throw Exception('Acesso não permitido.');
     }
-    if (resposta.statusCode != 204) {
+    // A sessão fica no cookie HttpOnly; o corpo (token para Bearer) não é usado no web.
+    if (resposta.statusCode < 200 || resposta.statusCode >= 300) {
       throw Exception(
         'Erro ao realizar login (HTTP ${resposta.statusCode}).',
       );
@@ -31,7 +32,7 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> obterUsuario() async {
-    final url = Uri.base.resolve('/api/v1/auth/me');
+    final url = Uri.base.resolve('/api/auth/me');
     final resposta = await http.get(url);
 
     if (resposta.statusCode == 401) {
@@ -53,7 +54,7 @@ class AuthService {
   }
 
   Future<String> obterTokenCsrf() async {
-    final url = Uri.base.resolve('/api/v1/auth/csrf');
+    final url = Uri.base.resolve('/api/auth/csrf');
     final resposta = await http.get(url);
 
     if (resposta.statusCode == 401) {
@@ -84,7 +85,7 @@ class AuthService {
 
   Future<void> logout() async {
     final tokenCsrf = await obterTokenCsrf();
-    final url = Uri.base.resolve('/api/v1/auth/logout');
+    final url = Uri.base.resolve('/api/auth/logout');
     final resposta = await http.post(
       url,
       headers: {
