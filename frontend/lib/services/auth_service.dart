@@ -8,13 +8,8 @@ class AuthService {
 
     final resposta = await http.post(
       url,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'username': email.trim(),
-        'password': senha,
-      },
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {'username': email.trim(), 'password': senha},
     );
 
     if (resposta.statusCode == 401) {
@@ -25,9 +20,7 @@ class AuthService {
     }
     // A sessão fica no cookie HttpOnly; o corpo (token para Bearer) não é usado no web.
     if (resposta.statusCode < 200 || resposta.statusCode >= 300) {
-      throw Exception(
-        'Erro ao realizar login (HTTP ${resposta.statusCode}).',
-      );
+      throw Exception('Erro ao realizar login (HTTP ${resposta.statusCode}).');
     }
   }
 
@@ -39,16 +32,12 @@ class AuthService {
       throw Exception('Sessão inválida ou expirada.');
     }
     if (resposta.statusCode != 200) {
-      throw Exception(
-        'Erro ao buscar usuário (HTTP ${resposta.statusCode}).',
-      );
+      throw Exception('Erro ao buscar usuário (HTTP ${resposta.statusCode}).');
     }
 
     final dados = jsonDecode(resposta.body);
     if (dados is! Map<String, dynamic>) {
-      throw const FormatException(
-        'A API retornou dados de usuário inválidos.',
-      );
+      throw const FormatException('A API retornou dados de usuário inválidos.');
     }
     return dados;
   }
@@ -69,16 +58,12 @@ class AuthService {
 
     final dados = jsonDecode(resposta.body);
     if (dados is! Map<String, dynamic>) {
-      throw const FormatException(
-        'Resposta CSRF inválida.',
-      );
+      throw const FormatException('Resposta CSRF inválida.');
     }
 
     final tokenCsrf = dados['csrf_token'];
     if (tokenCsrf is! String || tokenCsrf.isEmpty) {
-      throw const FormatException(
-        'A API não retornou um token CSRF válido.',
-      );
+      throw const FormatException('A API não retornou um token CSRF válido.');
     }
     return tokenCsrf;
   }
@@ -86,12 +71,7 @@ class AuthService {
   Future<void> logout() async {
     final tokenCsrf = await obterTokenCsrf();
     final url = Uri.base.resolve('/api/auth/logout');
-    final resposta = await http.post(
-      url,
-      headers: {
-        'X-CSRF-Token': tokenCsrf,
-      },
-    );
+    final resposta = await http.post(url, headers: {'X-CSRF-Token': tokenCsrf});
 
     if (resposta.statusCode == 401) {
       throw Exception('Sessão inválida ou expirada.');
@@ -100,8 +80,40 @@ class AuthService {
       throw Exception('Não foi possível validar a segurança da sessão.');
     }
     if (resposta.statusCode != 204) {
+      throw Exception('Erro ao encerrar sessão (HTTP ${resposta.statusCode}).');
+    }
+  }
+
+  Future<void> registrarDono({
+    required String nome,
+    required String email,
+    String? telefone,
+    required String senha,
+  }) async {
+    final url = Uri.base.resolve('/api/auth/registro');
+    final telefoneNormalizado = telefone?.trim();
+    final resposta = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'nome': nome.trim(),
+        'email': email.trim().toLowerCase(),
+        'telefone': telefoneNormalizado == null || telefoneNormalizado.isEmpty
+            ? null
+            : telefoneNormalizado,
+        'senha': senha,
+      }),
+    );
+
+    if (resposta.statusCode == 409) {
+      throw Exception('Este e-mail já está cadastrado.');
+    }
+    if (resposta.statusCode == 422) {
+      throw Exception('Dados inválidos. Verifique as informações preenchidas.');
+    }
+    if (resposta.statusCode != 201) {
       throw Exception(
-        'Erro ao encerrar sessão (HTTP ${resposta.statusCode}).',
+        'Erro ao realizar cadastro (HTTP ${resposta.statusCode}).',
       );
     }
   }

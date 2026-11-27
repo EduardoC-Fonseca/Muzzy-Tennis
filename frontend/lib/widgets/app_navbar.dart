@@ -149,7 +149,9 @@ class AppNavebar extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton(
-                      onPressed: () => navegar('/cadastro-quadras'),
+                      onPressed: () => navegar(
+                        sessao.autenticado ? '/cadastro-quadras' : '/login',
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.verdeMuzziTennis,
                         side: const BorderSide(
