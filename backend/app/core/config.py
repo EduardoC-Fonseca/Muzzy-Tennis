@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     app_name: str = "Muzzi Tennis API"
     environment: Literal["development", "test", "production"] = "development"
     debug: bool = False
-    api_prefix: str = "/api/v1"
+    api_prefix: str = "/api"
 
     # DATABASE_URL completa, se definida, tem prioridade sobre as variáveis DB_*.
     database_url_override: str | None = Field(default=None, validation_alias="DATABASE_URL")

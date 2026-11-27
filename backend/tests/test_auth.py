@@ -1,7 +1,7 @@
 from app.models import PapelUsuario
 
-LOGIN = "/api/v1/auth/login"
-ME = "/api/v1/auth/me"
+LOGIN = "/api/auth/login"
+ME = "/api/auth/me"
 
 
 def _login(client, email, senha):
@@ -68,11 +68,11 @@ def test_sem_token_retorna_401_no_formato_padrao(client):
 
 
 def test_erros_do_framework_saem_no_formato_padrao(client):
-    resp = client.get("/api/v1/nao-existe")
+    resp = client.get("/api/nao-existe")
     assert resp.status_code == 404
     assert resp.json()["code"] == "NAO_ENCONTRADO"
 
-    resp = client.put("/api/v1/health")
+    resp = client.put("/api/health")
     assert resp.status_code == 405
     assert resp.json()["code"] == "METODO_NAO_PERMITIDO"
 

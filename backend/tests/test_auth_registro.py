@@ -4,9 +4,9 @@ import pytest
 
 from app.models import PapelUsuario
 
-REGISTRO = "/api/v1/auth/registro"
-LOGIN = "/api/v1/auth/login"
-ME = "/api/v1/auth/me"
+REGISTRO = "/api/auth/registro"
+LOGIN = "/api/auth/login"
+ME = "/api/auth/me"
 
 
 def _dados(**sobrescrever):

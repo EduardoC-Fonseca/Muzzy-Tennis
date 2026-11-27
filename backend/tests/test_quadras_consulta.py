@@ -4,8 +4,8 @@ import pytest
 
 from app.models import FotoQuadra, PapelUsuario, Quadra, TipoPiso
 
-QUADRAS = "/api/v1/quadras"
-MINHAS = "/api/v1/quadras/minhas"
+QUADRAS = "/api/quadras"
+MINHAS = "/api/quadras/minhas"
 SENHA = "senha-segura-123"
 
 
@@ -16,7 +16,7 @@ def login(client, criar_usuario):
     def _login(email="dono@muzzi.test", papel=PapelUsuario.DONO_QUADRA, status=True):
         usuario = criar_usuario(email=email, senha=SENHA, papel=papel, status=status)
         token = client.post(
-            "/api/v1/auth/login", data={"username": email, "password": SENHA}
+            "/api/auth/login", data={"username": email, "password": SENHA}
         ).json()
         headers = {"Authorization": f"Bearer {token.get('access_token')}"}
         return usuario, headers

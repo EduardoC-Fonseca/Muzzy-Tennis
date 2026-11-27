@@ -51,7 +51,7 @@ uvicorn app.main:app --reload                           # sobe em :8000
 
 ### 3. Usuários para teste
 
-Clientes não fazem login. **Donos de quadra** podem se cadastrar pela API (`POST /api/v1/auth/registro`, passo 2 do roteiro do Swagger) ou pelo script. **Administradores** só são criados pelo script. A senha é pedida no terminal. Se o e-mail já existir, o script atualiza o usuário: troca a senha, aplica o papel informado e reativa a conta. Isso serve para redefinir a senha de um usuário de teste.
+Clientes não fazem login. **Donos de quadra** podem se cadastrar pela API (`POST /api/auth/registro`, passo 2 do roteiro do Swagger) ou pelo script. **Administradores** só são criados pelo script. A senha é pedida no terminal. Se o e-mail já existir, o script atualiza o usuário: troca a senha, aplica o papel informado e reativa a conta. Isso serve para redefinir a senha de um usuário de teste.
 
 ```bash
 # venv:
@@ -65,11 +65,11 @@ docker compose exec api python -m app.scripts.criar_usuario --papel dono_quadra 
 
 Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/integracao_frontend.md`](../docs/integracao_frontend.md).
 
-1. **Saúde:** `GET /api/v1/health` → *Try it out* → *Execute*. Esperado: `{"status": "ok", "banco": "ok"}`.
-2. **Cadastro de dono:** `POST /api/v1/auth/registro` com `{"nome": "Maria Souza", "email": "maria@muzzi.local", "telefone": "(31) 99999-9999", "senha": "senha-segura-123"}`. Esperado: `201` com `papel = dono_quadra`. Repetir o mesmo e-mail dá `409 EMAIL_JA_CADASTRADO`; uma senha curta dá `422`.
+1. **Saúde:** `GET /api/health` → *Try it out* → *Execute*. Esperado: `{"status": "ok", "banco": "ok"}`.
+2. **Cadastro de dono:** `POST /api/auth/registro` com `{"nome": "Maria Souza", "email": "maria@muzzi.local", "telefone": "(31) 99999-9999", "senha": "senha-segura-123"}`. Esperado: `201` com `papel = dono_quadra`. Repetir o mesmo e-mail dá `409 EMAIL_JA_CADASTRADO`; uma senha curta dá `422`.
 3. **Login:** clique em **Authorize** (cadeado, no topo), preencha `username` com o e-mail do dono e `password` com a senha e confirme. Daqui em diante o Swagger envia o token sozinho.
-4. **Conferir o usuário:** `GET /api/v1/auth/me` deve devolver o papel `dono_quadra`.
-5. **Cadastrar quadra (CT07):** `POST /api/v1/quadras` com o corpo abaixo. Esperado: `201`, com `estado` em maiúsculas e o `cep` formatado.
+4. **Conferir o usuário:** `GET /api/auth/me` deve devolver o papel `dono_quadra`.
+5. **Cadastrar quadra (CT07):** `POST /api/quadras` com o corpo abaixo. Esperado: `201`, com `estado` em maiúsculas e o `cep` formatado.
    ```json
    {
      "nome": "Quadra Central", "descricao": "Quadra coberta com iluminação.",
@@ -79,10 +79,10 @@ Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/i
    }
    ```
 6. **Validações (CT08, CT10):** reenvie com `{}`, com uma `descricao` de 501 caracteres, `"tipo_piso": "carpete"` ou `"cep": "123"`. Esperado: `422`, `code = VALIDACAO` e a lista `erros` indicando cada campo.
-7. **Fotos (CT09):** `POST /api/v1/quadras/{quadra_id}/fotos` com o `id` da quadra. Em `fotos`, clique em **Escolher arquivo**. Para mandar mais de um arquivo, use *Add string item*: cada clique cria um novo seletor. Misture uma imagem (JPEG/PNG/WebP) com um PDF ou TXT. Esperado: `201`, a imagem em `fotos` e o outro arquivo em `rejeitadas`, com o motivo. Abra `http://localhost:8000` + a `url` devolvida para ver a imagem. Só arquivos inválidos dão `422 FOTOS_REJEITADAS`.
+7. **Fotos (CT09):** `POST /api/quadras/{quadra_id}/fotos` com o `id` da quadra. Em `fotos`, clique em **Escolher arquivo**. Para mandar mais de um arquivo, use *Add string item*: cada clique cria um novo seletor. Misture uma imagem (JPEG/PNG/WebP) com um PDF ou TXT. Esperado: `201`, a imagem em `fotos` e o outro arquivo em `rejeitadas`, com o motivo. Abra `http://localhost:8000` + a `url` devolvida para ver a imagem. Só arquivos inválidos dão `422 FOTOS_REJEITADAS`.
 8. **Permissões:** faça login como administrador (Authorize → *Logout* → login de novo) e tente `POST /quadras`: `403`. Sem login: `401`.
-9. **Remover foto:** `DELETE /api/v1/quadras/{quadra_id}/fotos/{foto_id}` → `204`. Se era a principal, a próxima foto vira a principal (confira no banco).
-10. **Consultar quadras (tarefa 13):** sem login (Authorize → *Logout*), `GET /api/v1/quadras` com `cidade = joao monlevade` (sem acento) e `tipo_piso = saibro`: a quadra cadastrada aparece. `GET /api/v1/quadras/{quadra_id}` traz o detalhe com as fotos. Logado como dono, `GET /api/v1/quadras/minhas` lista as quadras dele, inclusive as inativas.
+9. **Remover foto:** `DELETE /api/quadras/{quadra_id}/fotos/{foto_id}` → `204`. Se era a principal, a próxima foto vira a principal (confira no banco).
+10. **Consultar quadras (tarefa 13):** sem login (Authorize → *Logout*), `GET /api/quadras` com `cidade = joao monlevade` (sem acento) e `tipo_piso = saibro`: a quadra cadastrada aparece. `GET /api/quadras/{quadra_id}` traz o detalhe com as fotos. Logado como dono, `GET /api/quadras/minhas` lista as quadras dele, inclusive as inativas.
 
 ## Acessar o banco (DBeaver ou outro cliente)
 
@@ -119,7 +119,7 @@ app/
   services/          # regras de negócio (não conhecem HTTP)
   api/
     deps.py          # sessão do banco, usuário atual, exigir_papel(...)
-    router.py        # agrega as rotas sob /api/v1
+    router.py        # agrega as rotas sob /api
     routes/          # um módulo por recurso
   scripts/           # utilitários de linha de comando
 alembic/versions/    # migrações

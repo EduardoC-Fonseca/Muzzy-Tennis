@@ -1,5 +1,5 @@
 def test_health_responde_com_banco_ok(client):
-    resp = client.get("/api/v1/health")
+    resp = client.get("/api/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok", "banco": "ok"}
 

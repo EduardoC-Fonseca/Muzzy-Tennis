@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.4.1 · **Última atualização:** 26/11/2026
+**Versão do contrato:** 0.5.0 · **Última atualização:** 27/11/2026
 
 ---
 
@@ -14,7 +14,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 
 | Item | Valor (desenvolvimento) |
 |---|---|
-| URL base da API | `http://localhost:8000/api/v1` |
+| URL base da API | `http://localhost:8000/api` (sem versão no caminho) |
 | Documentação interativa (Swagger) | `http://localhost:8000/docs` |
 | Especificação OpenAPI | `http://localhost:8000/openapi.json` |
 | Arquivos enviados (fotos) | `http://localhost:8000` + campo `url` (ex.: `http://localhost:8000/uploads/quadras/1/abc.jpg`) |
@@ -22,7 +22,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 
 > **Flutter web:** rode com uma porta fixa liberada no CORS, por exemplo `flutter run -d chrome --web-port 8080`. Para usar outra porta, inclua a origem em `CORS_ORIGINS`.
 
-Recomendação: centralizar a URL base num único lugar do app (ex.: `const apiBaseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8000/api/v1');`).
+Recomendação: centralizar a URL base num único lugar do app (ex.: `const apiBaseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:8000/api');`).
 
 ## 2. Convenções
 
@@ -451,6 +451,7 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.5.0 | 27/11/2026 | **Mudança incompatível:** a URL base passa de `/api/v1` para `/api`, sem versão no caminho (ex.: `POST /api/auth/login`). |
 | 0.4.1 | 26/11/2026 | Correção: requisição sem token agora responde `401` no formato padrão, com `code = NAO_AUTENTICADO` (antes vinha `{"detail": "Not authenticated"}`, sem `code`). Erros do próprio framework (endereço inexistente, método não permitido) também saem com `code`. Novo código `405 METODO_NAO_PERMITIDO`. |
 | 0.4.0 | 25/11/2026 | Consulta de quadras (tarefa 13): `GET /quadras` (busca pública por cidade, tipo de piso e coberta, paginada), `GET /quadras/{id}` (detalhe público; inativa só para o dono e o administrador) e `GET /quadras/minhas` (quadras do dono). Convenção de listagens paginadas. Fluxo e mapeamento da busca (7.5 e 7.6). |
 | 0.3.0 | 24/11/2026 | Cadastro público de dono de quadra (`POST /auth/registro`, pendência P03), com o erro `409 EMAIL_JA_CADASTRADO`. Seções 6.4 a 6.6 renumeradas para 6.5 a 6.7. Fluxo e mapeamento da tela `/cadastro-login` (7.3 e 7.4). |
