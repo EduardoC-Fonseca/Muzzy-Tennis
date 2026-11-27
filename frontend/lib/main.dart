@@ -51,7 +51,7 @@ class _MuzziTennisAppState extends State<MuzziTennisApp> {
         return Stack(
           fit: StackFit.expand,
           children: [
-            if (child != null) child,
+            ?child,
             if (_restaurandoSessao)
               const ColoredBox(
                 color: AppTheme.fundoPreto,
