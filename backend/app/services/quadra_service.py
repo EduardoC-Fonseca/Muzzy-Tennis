@@ -216,14 +216,21 @@ def listar_quadras(
     return list(quadras), total
 
 
+def pode_gerenciar(quadra: Quadra, usuario: Usuario | None) -> bool:
+    """O dono da quadra ou um administrador."""
+    return usuario is not None and (
+        usuario.papel == PapelUsuario.ADMINISTRADOR or usuario.id == quadra.dono_id
+    )
+
+
+def visivel_ao_publico(quadra: Quadra) -> bool:
+    return quadra.ativa and quadra.dono.ativo
+
+
 def obter_quadra_visivel(db: Session, quadra_id: int, usuario: Usuario | None) -> Quadra:
     """Detalhe da quadra. Inativa (ou de dono inativo) só aparece para o dono e o administrador;
     para os demais responde 404, como se não existisse."""
     quadra = obter_quadra(db, quadra_id)
-    visivel = quadra.ativa and quadra.dono.ativo
-    pode_gerenciar = usuario is not None and (
-        usuario.papel == PapelUsuario.ADMINISTRADOR or usuario.id == quadra.dono_id
-    )
-    if not (visivel or pode_gerenciar):
+    if not (visivel_ao_publico(quadra) or pode_gerenciar(quadra, usuario)):
         raise NaoEncontradoError("Quadra não encontrada.", code="QUADRA_NAO_ENCONTRADA")
     return quadra

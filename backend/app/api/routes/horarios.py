@@ -1,11 +1,13 @@
-"""Horários das quadras (tarefa 20). A consulta pública de disponibilidade é a tarefa 52."""
+"""Horários das quadras: gerenciamento pelo dono (tarefa 20) e disponibilidade pública
+(tarefa 52)."""
 
 from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Response, status
 
-from app.api.deps import DbSession, UsuarioAtual
+from app.api.deps import DbSession, UsuarioAtual, UsuarioOpcional
+from app.core.exceptions import AcessoNegadoError
 from app.models import StatusHorario
 from app.schemas.horario import (
     HorarioAtualizar,
@@ -40,20 +42,37 @@ def gerar_horarios(
 @router.get(
     "",
     response_model=list[HorarioPublico],
-    summary="Listar horários da quadra (dono da quadra ou administrador)",
+    summary="Listar horários da quadra (disponibilidade pública ou visão do dono)",
 )
 def listar_horarios(
     quadra_id: int,
     db: DbSession,
-    usuario: UsuarioAtual,
+    usuario: UsuarioOpcional,
     data_inicio: Annotated[date | None, Query(description="Padrão: hoje")] = None,
     data_fim: Annotated[date | None, Query(description="Padrão: data_inicio + 6 dias")] = None,
-    status: StatusHorario | None = None,
+    status: Annotated[
+        StatusHorario | None,
+        Query(description="Só para o dono e o administrador; o público vê só os disponíveis"),
+    ] = None,
 ) -> list[HorarioPublico]:
-    """Todos os horários do período (disponíveis, reservados e bloqueados), por data e hora."""
-    quadra = quadra_service.obter_quadra_para_gerenciar(db, quadra_id, usuario)
+    """Horários do período, por data e hora.
+
+    - **Público** (sem login, ou logado sem ser dono desta quadra): só horários **disponíveis**
+      que ainda não começaram, de quadras ativas. É a disponibilidade para o cliente reservar.
+    - **Dono da quadra ou administrador**: todos os status (disponíveis, reservados e
+      bloqueados), inclusive os que já passaram, com filtro opcional por ``status``.
+    """
+    quadra = quadra_service.obter_quadra_visivel(db, quadra_id, usuario)
+    gerencia = quadra_service.pode_gerenciar(quadra, usuario)
+    if not gerencia and status not in (None, StatusHorario.DISPONIVEL):
+        raise AcessoNegadoError("Só o dono da quadra vê horários reservados ou bloqueados.")
     horarios = horario_service.listar_horarios(
-        db, quadra, data_inicio=data_inicio, data_fim=data_fim, status=status
+        db,
+        quadra,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        status=status,
+        somente_disponiveis=not gerencia,
     )
     return [HorarioPublico.model_validate(h) for h in horarios]
 
