@@ -115,6 +115,9 @@ def login(client, criar_usuario):
         token = client.post(
             "/api/auth/login", data={"username": email, "password": SENHA_TESTE}
         ).json()
+        # O login também grava o cookie de sessão; limpa para que só o Bearer autentique e
+        # requisições "sem token" continuem anônimas. O fluxo por cookie: test_auth_cookie.py.
+        client.cookies.clear()
         headers = {"Authorization": f"Bearer {token.get('access_token')}"}
         return usuario, headers
 

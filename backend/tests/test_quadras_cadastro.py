@@ -47,6 +47,7 @@ def auth(client, criar_usuario):
     def _auth(email="dono@muzzi.test", papel=PapelUsuario.DONO_QUADRA):
         criar_usuario(email=email, senha=SENHA, papel=papel)
         resp = client.post("/api/auth/login", data={"username": email, "password": SENHA})
+        client.cookies.clear()  # só o Bearer autentica (ver conftest.login)
         return {"Authorization": f"Bearer {resp.json()['access_token']}"}
 
     return _auth
