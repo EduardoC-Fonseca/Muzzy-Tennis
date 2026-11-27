@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     estorno_percentual_dentro_prazo: int = 100  # P04
     duracao_slot_minutos: int = 60  # P07: horários de 1 hora
     limite_reservas_dia_cliente: int = 2  # P07: máx. 2 reservas por dia por cliente
+    fuso_horario: str = "America/Sao_Paulo"  # datas/horas dos horários são locais da quadra
+    horarios_max_dias_por_operacao: int = 92  # geração e consulta de horários (~3 meses)
 
     upload_dir: str = "uploads"
     upload_max_bytes: int = 5 * 1024 * 1024

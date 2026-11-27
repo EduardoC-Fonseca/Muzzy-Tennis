@@ -42,3 +42,8 @@ class HorarioQuadra(TimestampMixin, Base):
 
     quadra: Mapped[Quadra] = relationship(back_populates="horarios")
     reservas: Mapped[list[Reserva]] = relationship(back_populates="horario")
+
+    @property
+    def preco_efetivo(self) -> Decimal:
+        """Preço cobrado do cliente: o do horário ou, se nulo, o da quadra."""
+        return self.preco if self.preco is not None else self.quadra.preco_hora
