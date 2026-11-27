@@ -6,7 +6,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 >
 > A referência executável é o OpenAPI gerado pela API (`/docs` e `/openapi.json`). Se houver divergência entre ele e este documento, o código vale e o documento deve ser corrigido.
 
-**Versão do contrato:** 0.6.0 · **Última atualização:** 27/11/2026
+**Versão do contrato:** 0.7.0 · **Última atualização:** 27/11/2026
 
 ---
 
@@ -15,6 +15,7 @@ Contrato da API REST consumida pelo front-end Flutter: convenções, autenticaç
 | Item | Valor (desenvolvimento) |
 |---|---|
 | URL base da API | `http://localhost:8000/api` (sem versão no caminho) |
+| Front pelo `docker-compose.yml` da raiz | `http://localhost:8080`. O nginx do front repassa `/api/` e `/uploads/` para a API, então o app usa caminhos relativos (`Uri.base.resolve('/api/...')`) e fica na mesma origem da API |
 | Documentação interativa (Swagger) | `http://localhost:8000/docs` |
 | Especificação OpenAPI | `http://localhost:8000/openapi.json` |
 | Arquivos enviados (fotos) | `http://localhost:8000` + campo `url` (ex.: `http://localhost:8000/uploads/quadras/1/abc.jpg`) |
@@ -45,22 +46,34 @@ Recomendação: centralizar a URL base num único lugar do app (ex.: `const apiB
 | Perfil | Faz login? | Como acessa |
 |---|---|---|
 | `cliente` | **Não** | Reserva informando os dados de identificação (próximas tarefas). |
-| `dono_quadra` | Sim | Cria a própria conta em `POST /auth/registro` (ver 6.4) e depois faz login. Token JWT. |
-| `administrador` | Sim | Conta criada só pela equipe, por script (não há cadastro público). Token JWT. |
+| `dono_quadra` | Sim | Cria a própria conta em `POST /auth/registro` (ver 6.4) e depois faz login. Sessão JWT. |
+| `administrador` | Sim | Conta criada só pela equipe, por script (não há cadastro público). Sessão JWT. |
 
-### Fluxo
+O JWT pode chegar à API de **duas formas**. Se as duas vierem, vale o cabeçalho `Authorization`.
 
-1. `POST /auth/login` com `username` (e-mail) e `password` em **form-urlencoded** (padrão OAuth2), não JSON.
-2. Guarde o `access_token` e envie em toda rota protegida: `Authorization: Bearer <token>`.
-3. O token expira em **60 minutos** (`ACCESS_TOKEN_EXPIRE_MINUTES`). Ao receber `401`, mande o usuário para o login.
-4. Conta desativada pelo administrador recebe `403` com `code = USUARIO_INATIVO`, **mesmo com um token ainda válido** (CT17). Mostre a mensagem e encerre a sessão.
+| Forma | Quem usa | CSRF |
+|---|---|---|
+| Cookie HttpOnly `muzzi_session`, gravado pelo login | **Front web (Flutter)**. O navegador envia o cookie sozinho; o app não lê nem guarda o token | Escritas (`POST`, `PUT`, `PATCH`, `DELETE`) exigem o cabeçalho `X-CSRF-Token` |
+| Cabeçalho `Authorization: Bearer <token>`, com o `access_token` do corpo do login | Swagger (botão *Authorize*), testes, clientes que não são navegador | Não exigido (não há cookie) |
+
+### Fluxo do front web (cookie)
+
+1. `POST /auth/login` com `username` (e-mail) e `password` em **form-urlencoded** (padrão OAuth2), não JSON. A resposta grava o cookie e traz o token CSRF no cabeçalho `X-CSRF-Token`.
+2. Leituras (`GET`) só precisam do cookie, que o navegador envia sozinho.
+3. Escritas: envie `X-CSRF-Token: <token>`. Se o app recarregar e perder o token, recupere com `GET /auth/csrf` (6.3.1). Sem ele, a resposta é `403 CSRF_INVALIDO`.
+4. A sessão expira em **60 minutos** (`ACCESS_TOKEN_EXPIRE_MINUTES`). Ao receber `401`, mande o usuário para o login.
+5. Conta desativada pelo administrador recebe `403` com `code = USUARIO_INATIVO`, **mesmo com uma sessão ainda válida** (CT17). Mostre a mensagem e encerre a sessão.
+6. Sair: `POST /auth/logout` com `X-CSRF-Token` (6.3.2).
+
+O login recusa navegadores em origens não liberadas (`403 ORIGEM_NAO_PERMITIDA`). São aceitas: a mesma origem da API, as origens de `CORS_ORIGINS` e requisições sem cabeçalho `Origin`.
 
 ```dart
 final resp = await http.post(
   Uri.parse('$apiBaseUrl/auth/login'),
   body: {'username': email, 'password': senha}, // Map → form-urlencoded
 );
-final token = jsonDecode(resp.body)['access_token'];
+final csrf = resp.headers['x-csrf-token']; // guardar em memória para as escritas
+// Fora do navegador (sem cookie): jsonDecode(resp.body)['access_token'] → Authorization: Bearer
 ```
 
 ## 4. Formato de erros
@@ -100,6 +113,8 @@ Sugestão: converter `erros` num `Map<String, String>` e usar como `errorText` d
 | 401 | `CREDENCIAIS_INVALIDAS` | Login com e-mail ou senha errados | Mensagem no formulário de login |
 | 403 | `USUARIO_INATIVO` | Conta desativada (login ou token válido) | Mensagem e logout |
 | 403 | `ACESSO_NEGADO` | Perfil sem permissão, ou recurso de outro proprietário | Mensagem "sem permissão" |
+| 403 | `CSRF_INVALIDO` | Escrita autenticada por cookie sem `X-CSRF-Token` válido | Buscar o token em `GET /auth/csrf` e repetir |
+| 403 | `ORIGEM_NAO_PERMITIDA` | Login vindo de uma origem fora de `CORS_ORIGINS` | Erro de configuração: liberar a origem no backend |
 | 404 | `NAO_ENCONTRADO` | Recurso genérico ou endereço inexistente | — |
 | 405 | `METODO_NAO_PERMITIDO` | Método HTTP errado para o endereço (ex.: `PUT` onde só há `GET`) | Erro de programação: revisar a chamada |
 | 404 | `QUADRA_NAO_ENCONTRADA` | Quadra inexistente | — |
@@ -171,7 +186,9 @@ Público. Corpo **`application/x-www-form-urlencoded`**:
 ```json
 200 { "access_token": "eyJhbGciOi...", "token_type": "bearer" }
 ```
-Erros: `401 CREDENCIAIS_INVALIDAS`, `403 USUARIO_INATIVO`, `422 VALIDACAO`.
+Cabeçalhos da resposta: `Set-Cookie: muzzi_session=...; HttpOnly; Path=/api; SameSite=lax` e `X-CSRF-Token: <token>`. O front web usa o cookie e o `X-CSRF-Token`; o `access_token` do corpo serve para o Bearer.
+
+Erros: `401 CREDENCIAIS_INVALIDAS`, `403 USUARIO_INATIVO`, `403 ORIGEM_NAO_PERMITIDA`, `422 VALIDACAO`.
 
 ### 6.3 `GET /auth/me` ✅
 
@@ -184,6 +201,18 @@ Requer token. Devolve o usuário autenticado (`UsuarioPublico`):
 }
 ```
 Use `papel` para decidir quais telas exibir.
+
+#### 6.3.1 `GET /auth/csrf` ✅ — Token CSRF da sessão
+
+Requer sessão. Devolve o mesmo token do cabeçalho `X-CSRF-Token` do login, para quando o app recarrega a página.
+
+```json
+200 { "csrf_token": "3f9a..." }
+```
+
+#### 6.3.2 `POST /auth/logout` ✅ — Encerrar sessão
+
+Requer sessão e, pelo cookie, o cabeçalho `X-CSRF-Token`. Resposta `204`, apagando o cookie. Com Bearer, basta descartar o token no cliente.
 
 ### 6.4 `POST /auth/registro` ✅ — Cadastro de dono de quadra
 
@@ -289,7 +318,7 @@ Mensagens de validação mais comuns: `Campo obrigatório.` · `Máximo de 500 c
 
 ```dart
 final req = http.MultipartRequest('POST', Uri.parse('$apiBaseUrl/quadras/$id/fotos'))
-  ..headers['Authorization'] = 'Bearer $token';
+  ..headers['X-CSRF-Token'] = csrf; // web: o cookie vai sozinho. Fora do navegador: Authorization: Bearer
 for (final f in arquivosSelecionados) {          // ex.: file_picker com withData: true
   req.files.add(http.MultipartFile.fromBytes('fotos', f.bytes!, filename: f.name));
 }
@@ -481,7 +510,7 @@ Validações recomendadas também na interface, para feedback imediato e espelha
 [Login] → "Cadastre-se aqui" → [/cadastro-login preenchido] → POST /auth/registro
     ├─ 422 VALIDACAO → mostrar erros[] nos campos; parar
     ├─ 409 EMAIL_JA_CADASTRADO → erro no e-mail + link "Já tem conta? Entrar"
-    └─ 201 → POST /auth/login com o mesmo e-mail e senha → guardar token → área do dono
+    └─ 201 → POST /auth/login com o mesmo e-mail e senha → guardar o X-CSRF-Token → área do dono
             (ou: mensagem de sucesso e voltar para /login)
 ```
 
@@ -572,6 +601,7 @@ Ainda **não disponíveis**. Os caminhos são indicativos e podem mudar; este do
 
 | Versão | Data | Alteração |
 |---|---|---|
+| 0.7.0 | 27/11/2026 | Sessão por cookie HttpOnly `muzzi_session` com proteção CSRF (front web), convivendo com o `Authorization: Bearer` (Swagger, testes). O login continua `200` com `access_token` e passa a gravar o cookie e devolver `X-CSRF-Token`. Novas rotas `GET /auth/csrf` e `POST /auth/logout` (6.3.1 e 6.3.2). Novos códigos `403 CSRF_INVALIDO` e `403 ORIGEM_NAO_PERMITIDA`. Front pelo compose da raiz em `localhost:8080`, com `/api/` e `/uploads/` repassados pelo nginx. |
 | 0.6.0 | 27/11/2026 | Gerenciamento de horários (tarefa 20): `POST`, `GET`, `PATCH` e `DELETE` em `/quadras/{id}/horarios` (seção 6.11), com geração em lote, horários ignorados com motivo e preservação dos reservados (CT12); no `PATCH`, `status` é o enum `StatusHorarioAlteravel`. Convenção de data e hora dos horários (local, `HH:MM`). Novos códigos de erro `HORARIO_*`, `PERIODO_SEM_DATAS` e `PERIODO_INVALIDO`. Fluxo e mapeamento da tela de horários (7.7 e 7.8). |
 | 0.5.0 | 27/11/2026 | **Mudança incompatível:** a URL base passa de `/api/v1` para `/api`, sem versão no caminho (ex.: `POST /api/auth/login`). |
 | 0.4.1 | 26/11/2026 | Correção: requisição sem token agora responde `401` no formato padrão, com `code = NAO_AUTENTICADO` (antes vinha `{"detail": "Not authenticated"}`, sem `code`). Erros do próprio framework (endereço inexistente, método não permitido) também saem com `code`. Novo código `405 METODO_NAO_PERMITIDO`. |

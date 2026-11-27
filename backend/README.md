@@ -22,6 +22,8 @@ Pré-requisitos: Docker e, para a opção B, Python 3.12+. O **banco sempre roda
 
 As duas usam a porta **8000**: rode **uma de cada vez**.
 
+**Tudo de uma vez (front + API + banco):** na raiz do repositório, `docker compose up -d --build`. O front fica em <http://localhost:8080> e a API em <http://localhost:8000>. Esse compose lê o `backend/.env` (faça o passo 1 antes). Ele usa o mesmo banco (volume `muzzi-tennis_mysql_data`) e as mesmas portas deste: suba um ou outro.
+
 ### 1. Banco de dados (comum às duas)
 
 ```bash
@@ -67,7 +69,7 @@ Abra <http://localhost:8000/docs>. O contrato de cada endpoint está em [`docs/i
 
 1. **Saúde:** `GET /api/health` → *Try it out* → *Execute*. Esperado: `{"status": "ok", "banco": "ok"}`.
 2. **Cadastro de dono:** `POST /api/auth/registro` com `{"nome": "Maria Souza", "email": "maria@muzzi.local", "telefone": "(31) 99999-9999", "senha": "senha-segura-123"}`. Esperado: `201` com `papel = dono_quadra`. Repetir o mesmo e-mail dá `409 EMAIL_JA_CADASTRADO`; uma senha curta dá `422`.
-3. **Login:** clique em **Authorize** (cadeado, no topo), preencha `username` com o e-mail do dono e `password` com a senha e confirme. Daqui em diante o Swagger envia o token sozinho.
+3. **Login:** clique em **Authorize** (cadeado, no topo), preencha `username` com o e-mail do dono e `password` com a senha e confirme. Daqui em diante o Swagger envia o token sozinho. O login também grava o cookie de sessão do front no navegador: para ficar **sem login** (passos 8 e 10), chame antes `POST /api/auth/logout` e só depois clique em Authorize → *Logout*.
 4. **Conferir o usuário:** `GET /api/auth/me` deve devolver o papel `dono_quadra`.
 5. **Cadastrar quadra (CT07):** `POST /api/quadras` com o corpo abaixo. Esperado: `201`, com `estado` em maiúsculas e o `cep` formatado.
    ```json
