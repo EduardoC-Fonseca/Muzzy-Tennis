@@ -2,51 +2,10 @@
 
 import pytest
 
-from app.models import FotoQuadra, PapelUsuario, Quadra, TipoPiso
+from app.models import FotoQuadra, PapelUsuario, TipoPiso
 
 QUADRAS = "/api/quadras"
 MINHAS = "/api/quadras/minhas"
-SENHA = "senha-segura-123"
-
-
-@pytest.fixture
-def login(client, criar_usuario):
-    """Cria um usuário e devolve (usuario, headers com o token)."""
-
-    def _login(email="dono@muzzi.test", papel=PapelUsuario.DONO_QUADRA, status=True):
-        usuario = criar_usuario(email=email, senha=SENHA, papel=papel, status=status)
-        token = client.post(
-            "/api/auth/login", data={"username": email, "password": SENHA}
-        ).json()
-        headers = {"Authorization": f"Bearer {token.get('access_token')}"}
-        return usuario, headers
-
-    return _login
-
-
-@pytest.fixture
-def nova_quadra(db):
-    def _nova(dono, **campos):
-        dados = {
-            "nome": "Quadra Central",
-            "descricao": "Quadra coberta.",
-            "tipo_piso": TipoPiso.SAIBRO,
-            "coberta": True,
-            "limite_jogadores": 4,
-            "preco_hora": 80,
-            "endereco": "Rua das Flores",
-            "bairro": "Centro",
-            "cidade": "João Monlevade",
-            "estado": "MG",
-            "cep": "35930-000",
-        }
-        dados.update(campos)
-        quadra = Quadra(dono_id=dono.id, **dados)
-        db.add(quadra)
-        db.commit()
-        return quadra
-
-    return _nova
 
 
 @pytest.fixture
