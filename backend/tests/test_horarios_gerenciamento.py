@@ -1,4 +1,4 @@
-"""Tarefa 20 — gerenciamento de horários pelo dono (HU04, CT12)."""
+"""Tarefa 20 — gerenciamento de horários pelo dono (HU04, CT12). Visão pública: tarefa 52."""
 
 from datetime import datetime, time, timedelta
 from decimal import Decimal
@@ -264,13 +264,6 @@ def test_lista_periodo_invalido(client, cenario, params):
     resp = client.get(_url(quadra), headers=headers, params=params)
     assert resp.status_code == 422
     assert resp.json()["code"] == "PERIODO_INVALIDO"
-
-
-def test_lista_exige_dono_da_quadra(client, login, cenario):
-    quadra, _ = cenario
-    _, outro = login("outro@muzzi.test")
-    assert client.get(_url(quadra)).status_code == 401
-    assert client.get(_url(quadra), headers=outro).status_code == 403
 
 
 # --- PATCH /quadras/{id}/horarios/{horario_id} -------------------------------------------
